@@ -1,0 +1,1423 @@
+--------------------------------------------------------------【NodeJs开端】--------------------------------------------------------------
+【官方中文文档】：http://nodejs.cn/api
+
+【NodeJs与javascript】：
+1---什么是NodeJs？
+它以ECMAscript为基础，是运行在服务器环境下的javascript语言
+它对Google V8引擎进行了封装，扩展出了很多操作非浏览器（系统，网络等）的方法和接口，对一些特殊用例进行了优化，提供了替代的API，使得V8在非浏览器环境下运行得更好。
+
+2---能做什么？
+操作OS操作系统、file文件系统、net网络、database数据库等。
+
+3---NodeJs和Javascript有什么区别？
+NodeJS是以ECMAscript为基础，然后在这个基础上扩展出来的一些操作其他东西（即操作非浏览器）的一些方法
+也就是说nodejs和JS在底层都是一样的，都是ECMAscript，但是扩展出来的功能却是不一样的。一个是偏向于前端浏览器，一个是偏向于服务器端
+
+相同点：
+	都是以ECMAscript为基础，内置对象、数据类型、和语法等都一样
+不同点：
+	js的顶层对象：window
+	nodeJs顶层对象：global
+
+【NodeJs的模块概念】：
+1---一个文件就是一个模块，每个模块都有自己的作用域；我们使用var声明的变量，他并不是global全局变量，而是属于当前模块下的全局变量
+2---不同的模块之间，可以相互引用和加载
+3---在一个模块中定义的变量或方法，在其他模块中不能直接访问，但我们可以通过其他方法去访问到这个模块中的变量或方法
+4---模块加载机制：
+	绝对路径/相对路径
+	先按照模块名称查找，在匹配后面的后缀名，如何没有找到，会在查找的文件名后面加上.js、.json、.node的后缀进行查找
+
+
+--------------------------------------------------------------【global对象】--------------------------------------------------------------
+【简介】：global对象为NodeJs的全局变量，全局变量在所有模块中均可使用。
+
+【__dirname】：当前模块的文件夹名称。
+
+【__filename】：当前模块的文件名称---解析后的绝对路径。
+
+【module.exports】：用于指定一个模块所导出的内容，即可以通过 require() 访问的内容。
+
+【exports】：这是一个对于 module.exports 的更简短的引用形式，它在模块被执行前被赋予 module.exports 的值。注意，就像任何变量，如果一个新的值被赋值给 exports，它就不再绑定到 module.exports
+
+*【process (进程)】：process 对象是一个 global （全局变量），通过这个对象提供的属性和方法，我们可以对当前运行的程序进行访问和控制。
+1---process.argv：属性返回一个数组，这个数组包含了启动Node.js进程时的命令行参数。第一个元素为启动Node.js进程的可执行文件所在的绝对路径。第二个元素为当前执行的JavaScript文件路径。
+2---process.execPath：返回启动Node.js进程的可执行文件所在的绝对路径。
+3---process.env：返回一个包含用户环境信息的对象（比如：当前操作系统、用户名等）
+4---process.version：返回Node.js的版本信息。
+5---process.versions：返回一个对象，此对象列出了Node.js和其依赖的版本信息。
+6---process.pid：返回进程的PID。
+7---process.title：返回当前进程的显示名称
+8---process.arch：返回当前CPU处理器架构 arm/ia32/x64
+9---process.platform：返回字符串，标识Node.js进程运行其上的操作系统平台。 例如'darwin', 'freebsd', 'linux', 'sunos' 或 'win32'
+10--process cwd() ：方法返回 Node.js 进程当前工作的目录。
+11--process.chdir()：方法变更Node.js进程的当前工作目录，如果变更目录失败会抛出异常
+12--process.memoryUsage()：方法返回Node.js进程的内存使用情况的对象，该对象每个属性值的单位为字节。
+13--process.exit()：终止进程。
+14--process.kill()：它其实只是发送信号
+15--process中的stdin和stdout：标准输入、输出流（也就是常说的IO）
+	标准输入设备：键盘鼠标等
+	标准输出设备：显示器等
+
+[实例1]：默认情况下输入流是关闭的.所以必须通过执行process.stdin.resume()来恢复它
+process.stdin.resume();
+process.stdin.on('data', function(data){
+    process.stdout.write('终端设备显示：'+data);
+});
+
+[实例2]：要求用户输入两个数值，然后把和输出到终端
+let num1,num2;
+process.stdin.resume();
+process.stdout.write('请输入num1的值：');
+process.stdin.on('data', function(data){
+    if( !num1 ){
+        num1 = Number(data);
+        process.stdout.write('请输入num2的值：');
+    }else{
+        num2 = Number(data);
+        process.stdout.write('总和得到：' + (num1+num2) );
+        process.exit();
+    }
+});
+
+
+--------------------------------------------------------------【Buffer对象】--------------------------------------------------------------
+【简介】：一个用于更好的操作二进制数据的类；我们在操作文件或者网络数据的时候，其实操作的就是二进制数据流，Node为我们提供了一个
+更加方便的去操作这种数据的类Buffer，它是一个全局的类。
+
+【创建Buffer】：Buffer.alloc(size[, fill[, encoding]])
+const buf1 = Buffer.alloc(5);	// 创建一个大小5字节的Buffer对象
+const buf2 = Buffer.alloc(5,'a');	// 创建一个大小5字节的Buffer对象，并用字母a去初始化
+console.log(buf1);		// 输出: <Buffer 00 00 00 00 00>
+console.log(buf2);		// 输出: <Buffer 61 61 61 61 61>
+
+【创建Buffer，并用数组初始化】：Buffer.from(array)
+let buf1 = Buffer.from([1,2,3]);
+console.log(buf1);		// 输出: <Buffer 01 02 03>
+
+【创建Buffer，并用字符串初始化】：Buffer.from(string[, encoding])
+let buf1 = Buffer.from('abc');
+console.log(buf1);              	// 输出: <Buffer 61 62 63>
+console.log(buf1.toString());   	// 输出: abc
+console.log(buf1.length);       	// 输出: 3个字节
+
+【写入string到Buffer中】：buf.write(string[, offset[, length]][, encoding])
+let buf = Buffer.from('abcdefg');
+buf.write('yqh',2,3);		// 从buf的第2个字节开始，写入3个字节进入buf
+console.log(buf.toString());       	// 输出: abyqhfg
+
+【返回Buffer的JSON格式】：buf.toJSON()
+let buf = Buffer.from('abc');
+console.log(buf);           	// 输出: <Buffer 61 62 63>
+console.log(buf.toJSON());  	// 输出: { type: 'Buffer', data: [ 97, 98, 99 ] }
+
+【截取Buffer对象】：buf.slice()
+let buf1 = Buffer.from('abcdefg');
+let buf2 = buf1.slice(0,3);	 // 从buf1对象的第0位开始，截取到第3位
+console.log(buf2.toString());       // 输出：abc
+（注意：被截取返回的Buffer对象和原来的Buffer对象引用内存是一样的，改变其中任何一个，都会相互影响）
+
+【拷贝Buffer对象】：buf.copy(target[, targetStart[, sourceStart[, sourceEnd]]])
+let buf1 = Buffer.from('ABCDEFG');
+let buf2 = Buffer.from('abc');
+buf2.copy(buf1,0,0);		// buf1中开始拷贝buf2，从buf1的第0位开始，从buf2的第0位开始
+console.log(buf1.toString());    	// 输出: abcDEFG
+
+
+【检测Buffer支持的字符编码】：Buffer.isEncoding(encoding) => 如果 encoding 是一个支持的字符编码则返回 true，否则返回 false 
+
+【检测obj 是否为一个Buffer】：Buffer.isBuffer(obj)
+
+【返回Buffer的字节长度】：Buffer.byteLength(string[, encoding])
+
+【拼接Buffer数组】：Buffer.concat(list[, totalLength])
+let buf1 = Buffer.from('abc');
+let buf2 = Buffer.from('def');
+let arrBuf = [buf1, buf2];
+let concatBuf = Buffer.concat(arrBuf);
+console.log(concatBuf.toString());      // 输出：abcdef
+
+
+
+--------------------------------------------------------------【fs对象操作文件系统】--------------------------------------------------------------
+/*【fs对象操作单个文件】*/
+
+【介绍】：该模块是核心模块，需要使用require('fs')导入后使用
+
+【打开一个文件】：fs.open(path, flags[, mode], callback)
+let fs = require('fs');
+fs.open('文件路径', 'r+', function(err, fd){
+    if (!err) { console.log(fd) }        // 被打开文件的标识，其中'r+'表示以什么样的方式打开文件(读/写/执行)
+});
+
+【同步模式】：Node的很多方法都有一个Sync的同步方法，比如
+fs.openSync(path, flags[, mode])
+它是 fs.open() 的同步版本，返回一个表示文件描述符的整数。
+
+【写入 buffer 到 fd 指定的文件】：fs.write(fd, buffer[, offset[, length[, position]]], callback)
+let fs = require('fs');
+fs.open('./1.txt', 'r+', function(err, fd){
+    if (err) {
+        console.log(err)
+    }else{
+        let buf = Buffer.from('123456789');
+        fs.write(fd, buf, 0, 5, 3, function(err, bytesWritten, buffer){
+            console.log(bytesWritten);           // 指定从 buffer 写入了多少字节。
+            console.log(buffer.toString());      // 返回原buffer对象'123456789'（1.txt文件内容变成了：abc12345）
+        })
+    }
+});
+
+【写入 string 到 fd 指定的文件】：fs.write(fd, string[, position[, encoding]], callback)
+let fs = require('fs');
+fs.open('./1.txt', 'r+', function(err, fd){
+    if (err) {
+        console.log(err)
+    }else{
+        let buf = Buffer.from('123456789');
+        fs.write(fd, '12345', 3, function(err, written, string){
+            console.log(written);           // 指定传入的字符串被写入多少字节
+            console.log(string);             // 返回原字符串 '12345'（1.txt文件内容变成了：abc12345）
+        })
+    }
+});
+
+【关闭打开的指定文件】：fs.close(fd, callback)
+
+【写入数据到文件】：fs.writeFile(file, data[, options], callback) 
+（如果文件不存在则创建文件，如果文件已经存在，则替代文件，data 可以是一个字符串或一个 buffer）
+fs.writeFile('./1.txt', 'hello', function(err){
+    if (err) throw err;
+});
+
+【异步地追加数据到一个文件】：fs.appendFile(file, data[, options], callback)
+（如果文件不存在则创建文件，如果文件已经存在，则追加文件内容，data 可以是一个字符串或 buffer）
+fs.appendFile('./2.txt', 'hello', function(err){
+    console.log(err)
+});
+
+【检查文件是否存在】：fs.stat(path, callback)
+fs.stat(path, function(err, stats){
+   console.log(stats)		// 文件如何不存在，则返回undefined；如果存在则返回文件信息
+});
+
+[实例]：检测文件是否存在(使用同步方法)
+let fs = require('fs');
+let path ='./2.txt' ;
+fs.stat(path, function(err, stats){
+    if(!stats){     // 文件不存在，创建文件，并添加内容
+        fs.writeFileSync(path, 'hello writeFile');
+    }else{          // 文件存在，添加内容
+        fs.appendFileSync(path, '-hello appendFile');
+    }
+});
+
+【读取文件的全部内容】：fs.readFile(path[, options], callback)
+fs.readFile(path, function(err, data){
+    if(err){
+        console.log('文件不存在')
+    }else{
+        console.log('文件存在，内容为：'+data)
+    }
+});
+
+【删除文件】：fs.unlink(path, callback)
+
+【文件重命名】：fs.rename(oldPath, newPath, callback)
+
+【文件监听】：fs.watch(filename[, options][, listener])
+fs.watch(path, function(eventType, filename){
+    console.log(eventType);     // 有rename（文件名改变）和change（文件内容改变）两种返回值
+    if(filename){
+        console.log(`提供的文件名: ${filename}`);
+    }else{
+        console.log('未提供文件名');
+    }
+});
+
+
+
+/*【fs对象操作单个文件夹】*/
+
+【创建文件夹】：fs.mkdir(path[, mode], callback)
+
+【读取文件夹】：fs.readdir(path[, options], callback)
+let fs = require('fs');
+let path = '文件夹路径';
+fs.readdir(path, function(err, files){
+    // files 返回文件夹目录下的子文件（不包括 '.' 和 '..' 的文件名的数组）
+    files.forEach(function(item){
+        fs.stat(item, function(err, stats){
+            switch (stats.mode) {
+                case 16822 :
+                    console.log('[它是文件夹]' + item)
+                    break;
+                case 33206 :
+                    console.log('[它是文件]' + item)
+                    break;
+                default:
+                    console.log('[其他文件类型]' + item)
+                    break;
+            }
+        })
+    });
+});
+
+【删除文件夹】：fs.rmdir(path, callback)
+
+
+/*【前端自动化-项目文件搭建】*/
+
+let projectData = {                         // 项目文件系统数据
+    'name' : './YQH',
+    'children' : [
+        {
+            type : 'dir',
+            name : 'js'
+        },
+        {
+            type : 'dir',
+            name : 'css'
+        },
+        {
+            type : 'dir',
+            name : 'images'
+        },
+        {
+            type : 'file',
+            name : 'index.html',
+            'content' : '<!DOCTYPE html>\n<html lang="en">\n\t<head>\n\t<meta charset="UTF-8">\n\t<title>Document</title>\n\t</head>\n<body>\n\t<p>hello NodeJs</p>\n</body>\n</html>'
+        }
+    ]
+};
+
+let fs = require('fs');
+let path = projectData.name;
+
+fs.mkdir(path, function(err){               		// 创建主文件
+    if(err){
+        console.log('创建文件夹失败');
+    }else{
+        let fileData = projectData.children;
+        if(fileData && Array.isArray(fileData)){
+            fileData.forEach(function(item){
+                let childPath = path+'/'+item.name;
+                switch (item.type) {        		// 创建子文件
+                    case 'dir':
+                        fs.mkdirSync(childPath);
+                        break;
+                    case 'file':
+                        let cont = item.content;
+                        fs.writeFileSync(childPath, cont);
+                        break;
+                    default :
+                        break;
+                }
+            })
+        }
+    }
+});
+
+
+/*【前端自动化-监听文件并合并文件】*/
+
+let fs = require('fs');
+let filedir = './source';
+let index = './index.txt';
+
+// 监听文件夹下的所有文件  只要有一个文件发生变化，就需要对这个文件夹下的所有文件进行读取和合并
+fs.watch(filedir, function(eventType, filename){            
+    fs.readdir(filedir, function(err, files){
+        let arr = [];
+        files.forEach(function(item){
+            if(item){
+                let filepath = filedir+'/'+item;
+                let info = fs.statSync( filepath );
+                if(info.mode === 33206){
+                    arr.push(filepath)
+                }
+            }
+        });
+        // 读取数组arr中的所有文件内容，并合并
+        let innerHtml = '';
+        arr.forEach(function(item){
+            let fileContxt = fs.readFileSync(item).toString();
+            innerHtml += fileContxt+'|';
+            fs.writeFile(index, innerHtml, function(err){
+                console.log(err)
+            })
+        });
+    })
+});
+
+
+/*【使用Node进行web开发】*/
+
+1.用户通过浏览器发送一个http请求到指定的服务器当中
+2.服务器接受到该请求后，会对改请求进行分享和处理
+3.服务器处理完成后，返回对应的数据到用户的终端上
+4.浏览器接收服务器返回的数据，并根据接收到的数据进行分析和处理
+
+1：http.createServer([requestListener])	它返回一个新的web服务器对象
+/*
+    监听：监听客户端链接请求，只有当调用了listen方法后，服务器才开始工作
+    server.listen([port][, hostname][, backlog][, callback])
+    path：监听端口
+    hostname：主机名(IP/域名)
+    backlog：连接等待队列的最大长度
+    callback：调用listen方法并成功开启监听后，会触发一个listening事件，callback将作为改事件的执行函数
+*/
+/*
+    触发事件：server下面的方法
+    listening事件：当server调用listen方法并成功开始监听后触发改事件
+    error事件：当服务器开启失败的时候触发的事件（比如：设置的端口被占用）
+    request事件：当有客户端发送的请求到该主机和端口的请求的时候触发
+            -参数request：http.incomingMessage的一个实例，通过它可以获取到这个请求的一些信息，比如请求头、数据等
+            -参数response：http.ServerResponse的一个实例，通过它可以向该次请求的客户端输出返回响应
+        参数request返回的信息：
+            -httpVersion：使用的http协议版本
+            -headers：请求头信息中的数据
+            -url：请求的地址
+            -method：请求方式（GET、POST）
+        参数response下的方法：
+            -wirte(chunk, [encoding])：发送一个数据块到响应的正文中
+            -end([chunk], [encoding])：当所有的正文和头信息发送完成后调用该方法告诉服务器数据已经全部发送完成了，
+                                       这个方法在每次完成信息发送以后必须调用，并且是最后调用
+            -statusCode：该属性用来设置返回的状态码
+            -setHead(statusCode, [reasonPhrase], [headers])：这个方法只能在当前请求中使用一次，并且必须在response.end()之前调用
+*/
+
+[例子]：
+// 加载一个http模块
+let http = require('http');
+
+// 通过http模块下的createServer创建并返回一个web服务器对象
+let server = http.createServer();
+
+// 启动监听服务(设置端口为80)
+server.listen(80, 'localhost');
+
+// 当设置的端口被占用时的错误处理
+server.on('error', function(err){
+    console.log(err);
+});
+
+// 调用listen方法并成功开启监听后，会触发一个listening事件
+server.on('listening', function(){
+    console.log('成功开启服务')
+});
+
+// 当有客户端发送的请求到该主机和端口的请求的时候触发
+1---（可以用浏览器访问：localhost:设置的端口名）
+2---（其实这个函数也可以直接写在 http.createServer(callBack) 的回调函数中，效果是一样的）
+server.on('request', function(req, res){
+    console.log('有客户端请求了')
+
+    // 设置头信息
+    res.setHeader('a','123');
+
+    //服务器返回状态并可以提供描述信息
+    res.writeHead(200, 'YQH', {
+        'content-type' : 'text/html;charset=utf-8'          // 解析html文本
+        //'content-type' : 'text/plain'                   	// 解析纯文本
+    });
+
+    // 向客户端显示内容 根据 res.writeHead里面的content-type类型绝对如何显示
+    res.write('<h2>Hello wrod</h2>');
+
+    // 结束输出
+    res.end()
+});
+
+
+/*【使用Node进行web开发-url处理】*/   ：通过url的不同，像客户端显示不同的页面信息
+[例子]：
+// 加载一个http模块
+let http = require('http');
+// 加载node提供的对网址的url进行解析的一个对象，以便我们对不同的url地址和url参数做不同的处理
+let url = require('url');
+// 通过http模块下的createServer创建并返回一个web服务器对象
+let server = http.createServer();
+// 启动监听服务(设置端口为80)
+server.listen(8080, 'localhost');
+// 根据用户发送的请求地址，去做不同的处理
+server.on('request', function(req, res){
+    let urlStr = url.parse(req.url);		    // req.url：访问路径，并用url对象去转换成一个Object
+    switch (urlStr.pathname) {
+        case '/':      			   // 访问首页
+            res.writeHead(200, 'YQH', {
+                'content-type' : 'text/html;charset=utf-8'
+            });
+            res.end('<h2>这是首页</h2>');	   // 这里的页面内容在下面的例子中，会使用fs模块去做分离
+            break;
+        case '/user':  			   // 访问用户页面
+            res.writeHead(200, 'YQH', {
+                'content-type' : 'text/html;charset=utf-8'
+            });
+            res.end('<h2>这是用户页面</h2>');
+            break;
+        default :     			    // 处理其他情况
+            res.writeHead(404, 'YQH', {
+                'content-type' : 'text/html;charset=utf-8'
+            });
+            res.end('<h2>你访问的路径不存在</h2>')
+            break;
+    }
+});
+
+
+/*【使用fs模块实现行为表现分离】*/   ：完善上个例子
+let http = require('http');
+let url = require('url');
+let fs = require('fs');
+let server = http.createServer();
+let htmlDir = __dirname+'/http/';
+
+server.on('request', function(req, res){
+    let urlStr = url.parse(req.url);
+    switch (urlStr.pathname) {
+        case '/':
+            sendData(htmlDir+'index.html', req, res);   // 首页
+            break;
+        case '/user':
+            sendData(htmlDir+'user.html', req, res);    // 个人中心
+            break;
+        default :
+            sendData(htmlDir+'none.html', req, res);    // 404页面
+            break;
+    }
+});
+
+// 封装一个函数，用来统一 res.end(写入的页面内容)
+function sendData (file, req, res) {
+   fs.readFile(file, function(err, data){
+        if(err){
+            res.writeHead(404, 'YQH', {
+                'content-type' : 'text/html;charset=utf-8'
+            });
+            res.end('<h2>页面出错！</h2>')
+        }else{
+            res.writeHead(200, 'YQH', {
+                'content-type' : 'text/html;charset=utf-8'
+            });
+            res.end(data)
+        }
+   })
+}
+
+server.listen(8080, 'localhost');
+
+
+/*【获取用户提交的数据】*/   
+let http = require('http');
+let url = require('url');
+let fs = require('fs');
+let querystring = require('querystring');
+let server = http.createServer();
+let path = __dirname+'/http/';
+
+server.on('request', function(req, res){
+    let urlStr = url.parse(req.url);
+    switch (urlStr.pathname) {
+        case '/':
+            sendFlie (path+'index.html', req, res);
+            break;
+        case '/login':
+            sendFlie (path+'login.html', req, res);
+            break;
+        case '/login/check':
+            /*   获取用户在login页面提交的数据信息,比如：（<form action="/login/check" method="xxx">）
+             *   req.method---获取用户提交的方式
+             *   urlStr.query---获取用户提交的数据
+             *   querystring.parse(urlStr.query)---将字符串数据进行对象格式化
+             *   post请求的数据处理：发送的数据会被写入缓冲区中，需要通过resquest的data事件和end事件来进行数据拼接处理
+             */
+            if (req.method.toUpperCase() === 'POST') {
+                var str = '';   	// 用于保存用户发送的post数据
+                req.on('data', function(chunk){
+                    str += chunk;
+                });
+                req.on('end', function(){
+                    console.log(querystring.parse(str))
+                })
+            }
+            break;
+        default :
+            sendFlie (path+'none.html', req, res);
+            break;
+    }
+});
+........................
+
+
+
+
+
+--------------------------------------------------------------【NodeJs实战--个人微博】--------------------------------------------------------------
+【技术框架】：NodeJs、Express、Mongodb
+
+【使用开发工具】：webstorm
+
+【第三方模块&中间件】：
+	bodyParser：解析post请求数据
+	cookies：读写cookie
+	swig：模版解析引擎
+	mongoose：操作mongodb数据
+	markdown：markdown语法解析生成模块
+
+【初始化阶段】：
+@可以直接使用webstorm提供的Terminal进行初始化和插件安装
+1---初始化项目：npm init（生成package.json文件，里面保存着初始化时的项目名等信息）
+2---安装Express模块：npm install --save express
+3---安装bodyParser模块：npm install --save  body-parser
+4---安装cookies模块：npm install --save cookies
+5---安装swig模块：npm install --save swig
+6---安装mongoose模块：npm install --save mongoose
+7---安装markdown模块：npm install --save markdown
+8---安装Mongodb：如下
+
+
+【安装mongodb】：
+1）安装路径：https://www.mongodb.com/download-center#community (在app.js里面使用mongodb)
+2）使用路径：http://www.runoob.com/mongodb/mongodb-window-install.html
+3）Mongodb将数据目录存储在 db 目录下，但是这个数据目录不会主动创建，我们在安装完成后需要创建它
+4）后面会讲解如何启动Mongodb，以及如何通过mongoose操作数据库（个人博客实战）
+
+【创建项目目录结构】：
+db：数据库存储目录
+models：数据库模型文件目录
+node_modules：这是第三方模块目录（自动生成的）
+public：公共文件目录（css、js、images等）
+routers：路由文件目录
+schemas：数据库结构文件（schema）目录
+views：模版视图文件目录
+app.js：入口文件
+
+
+【创建应用、监听端口】：app.js中写入
+let express = require('express');		// 加载express模块
+let app = express();			// 创建app应用( 相当于NodeJs中的http.createServer() )
+app.listen(8081);			// 监听http请求（相当于server.listen(8081,'localhost')）
+
+
+【用户如何访问页面】：
+1）用户通过URL访问web应用，如：http://localhost:8081/
+2）web后端根据用户访问的URL处理不同的业务逻辑
+
+【处理请求输出】：
+1）路由绑定：通过app.get()或者app.post()等方法可以把一个url路径和一个或多个函数进行绑定：app.get('/', function(req, res, next){.....})
+	req：request对象，保存客户端请求的相关数据---http.request
+	res：response对象，服务端输出对象，提供一些服务器端输出的一些方法---http.response
+	next：用于执行下一个和路径匹配的函数
+2）内容输出：通过res.send(string)发送内容至客户端
+
+[实例]：像 http://localhost:8081/ 地址的页面输出一段内容给用户
+let express = require('express');
+let app = express();
+app.get('/', function(req, res, next){
+    res.send('<h1>hello word</h1>')	// 这里的前后端在下面的例子中将完成分离
+});
+app.listen(8081);
+
+
+【使用模版&配置模版】：通过swig模版，进行前后端分离
+let swig = require('swig');		// 引人模版引擎
+app.engine('html', swig.renderFile);	// 定义模版引擎，使用swig.renderFile方法解析后缀为html的文件
+app.set('views', './views');		// 设置模版文件存放的目录，第一个参数必须是views，第二个参数是目录路径
+app.set('view engine', 'html');		// 注册模版引擎，第一个参数必须是 view engine，第二个参数和上面的 app.engine 中的第一个参数必须一致
+swig.setDefaults({cache:false});		// 在开发过程中，手动取消模版缓存（swig模版在第一次解析模版后，就会存入缓存中，并且每次更改要重启服务才能看到页面更改）
+res.render('index.html');		// 在app.get方法中使用【第一个参数：表示模版文件（它会去找到views目录下的index.html文件读取并解析）】【 第二个参数：传递给模版使用的数据】
+
+[实例]：
+let express = require('express');		// 加载express模块
+let swig = require('swig');		// 加载swig模版
+let app = express();			// 创建app应用( 相当于NodeJs中的http.createServer() )
+app.engine('html', swig.renderFile);	// 配置和应用swig模版(使用swig.renderFile方法解析后缀为html的文件)
+app.set('views', './views');		// 设置模版文件存放的目录，第一个参数必须是views，第二个参数是目录
+app.set('view engine', 'html');		// 注册所使用的模版引擎，第一个参数必须是 view engine，第二个参数和 上面的 app.engine 中的第一个参数必须一致
+swig.setDefaults({cache:false});		// 在开发过程中，手动取消模版缓存
+app.get('/', function(req, res, next){
+    res.render('index.html')		// 加载views目录下的index.html页面
+});
+app.listen(8081);			// 监听http://8081/端口请求
+
+
+【静态文件托管】：处理html文件中的js、css、image等其他资源文件的加载问题
+app.use('/public', express.static(__dirname + '/public'));	// 假设public文件夹下面存放着css、js等资源文件
+[配置并设置加载的路径]：在app.js文件里面写入
+// 设置静态文件托管：当页面访问的url以 /public开始的地址时，那么直接返回对应的(__dirname + 'public')文件夹下的文件资源
+// 比如加载public目录下的main.css文件：<link rel="stylesheet" type="text/css" href="/public/main.css">
+app.use('/public', express.static(__dirname + '/public'));
+它的具体过程是这样的：页面发送http请求 --> url --> 解析路由 --> 找到匹配规则 --> 执行绑定的函数，返回对应的内容
+
+
+【分模块开发与实现】：
+1）根据功能进行模块划分，便于管理代码（前台模块、后台管理模块、API模块等）
+2）使用app.use() 进行模块划分
+
+[实例]：通过url路由访问不同页面-->假设有这么3个页面（localhost:8081/admin/user、http://localhost:8081/api/user、localhost:8081/）
+1）在app.js页面：
+let express = require('express');
+let app = express();
+/*
+* app.use(参数1, 参数2);
+*   参数1：访问路径 http://localhost:8081/参数1
+*   参数2：引人routers目录下的js模块，去加载不同的路由页面
+* */
+app.use('/admin', require('./routers/admin'));  	// 访问：http://localhost:8081/admin/user
+app.use('/api', require('./routers/api'));      	// 访问：http://localhost:8081/api/user
+app.use('/', require('./routers/main'));        	// 访问：http://localhost:8081/
+app.listen(8081);
+
+2）在routers路由目录下创建上面的admin.js api.js main.js文件 内容大同小异
+let express = require('express');
+let router = express.Router();
+router.get('/user', function(req, res, next){
+    res.send('我是xxx路由');	   // 直接显示字符串到页面上
+    // res.render('main/index');       // 实际开发是，比如加载views目录下的main文件夹下面的index.html页面
+});
+module.exports = router;
+
+
+
+
+
+
+
+--------------------------------------------------------------【个人博客实战】--------------------------------------------------------------
+/*
+* main模块：
+*           /                         首页
+*           /view                  内容页面
+* api模块：
+*           /                  	       首页
+*           /register              用户注册页面
+*           /login                  用户登陆页面
+*           /comment           评论获取页面
+*           /comment/post   评论提交页面
+*  admin模块：
+*           /                          首页
+*       用户管理：
+*           /user                    用户列表
+*       分类管理：
+*           /categpry              分类列表
+*           /categpry/add       分类添加
+*           /categpry/edit       分类修改
+*           /categpry/delete   分类删除
+*       文章内容管理：
+*           /article                  内容列表
+*           /article/add           内容添加
+*           /article/edit           内容修改
+*           /article/delet         内容删除
+*       评论内容管理：
+*           /comment             评论列表
+*           /comment/delete  评论删除
+* */
+
+
+【创建项目目录结构】：
+db：数据库存储目录
+node_modules：这是第三方模块目录（自动生成的）
+public：公共文件目录（css、js、images等）
+routers：路由文件目录
+models：数据库模型文件目录
+schemas：数据库结构文件（schema）目录
+views：模版视图文件目录
+app.js：入口文件
+
+【初始化阶段】：
+@可以直接使用webstorm提供的Terminal进行初始化和插件安装
+1---初始化项目：npm init（生成package.json文件，里面保存着初始化时的项目名等信息）
+2---安装Express模块：npm install --save express
+3---安装bodyParser模块：npm install --save  body-parser
+4---安装cookies模块：npm install --save cookies  
+5---安装swig模块：npm install --save swig
+6---安装mongoose模块：npm install --save mongoose
+7---安装markdown模块：npm install --save markdown
+8---安装Mongodb：如下
+
+【安装mongodb】：
+1）安装路径：https://www.mongodb.com/download-center#community (在app.js里面使用mongodb)
+2）使用路径：http://www.runoob.com/mongodb/mongodb-window-install.html
+3）Mongodb将数据目录存储在 db 目录下，但是这个数据目录不会主动创建，我们在安装完成后需要创建它
+4）启动Mongodb并用mongoose操作数据库：如下
+
+【@】在目录schemas下创建users.js页面，使用mongoose对数据库进行操作
+1）使用cmd命令行去执行一些程序：
+           1）进入到安装Mongodb的bin目录下面去执行：mongod --dbpath=你创建的db目录 port=指定一个不被占用的端口(比如：xxx)
+           实例：mongod --dbpath=D:\NodeMicroBlog\db
+           2）官方最新版的mongodb需要： VC++2015 RC x64的支持，否则会报错（可以通过命令： msinfo32   查看自己电脑的版本等系统信息）
+           3）如何回车运行时发现提示计算机丢失某个.dll文件，那么可以去这里下载 https://www.microsoft.com/zh-cn/download/details.aspx?id=48145
+           4）再次运行：mongod --dbpath=db文件路径 --port=设置新端口  最后面提示waiting for connections on port“ 新端口名”就代表运行成功了
+
+2）在通过Robomongo数据库软件去启动服务，你可以下载 Robomongo 软件去启动服务（设置数据库名称，链接端口，用默认的27017或者你自己通过--port设置的端口）
+
+3）使用mongoose操作数据库（在app.js里面先加载和操作数据库）
+[数据库的使用]：一般我们不直接用mongondb的函数来操作mongondb数据库 而是用mongose套操作MongoDB数据库
+	1---开启mongondb数据库，如上面的1、2步骤（首先确保你已经安装了mongondb和mongoose）
+	2---数据保存-->使用mongoose操作数据库（API-->http://mongoosejs.com）
+	3---创建model（通过Schema创建模型类）（mongoose.model（'模型类名称', Schema））
+[步骤1]：在app.js中写入
+let express = require('express');	// 加载express模块
+let swig = require('swig');		// 加载前后端分离模板
+let mongoose = require('mongoose');     // 加载数据库
+let app = express();			// 创建app应用
+app.engine('html', swig.renderFile);	// 定义当前模板所使用的模板引擎
+app.set('views', './views');		// 设置模板文件存放的目录（第一个参数不可变）
+app.set('view engine', 'html');		// 注册所使用的模板引擎(第一个参数不可变，第二个参数和上面的一致)
+swig.setDefaults({cache:false});	// 开发过程中，解除swig模板缓存
+
+// 设置静态文件托管(页面如果访问以 '/public' 开头的资源，就加载 '__dirname + '/public' 文件下面的资源）
+// 比如：<link rel="stylesheet" type="text/css" href="/public/index.css"> （rel参数不要忘记）
+app.use('/public', express.static(__dirname + '/public'));
+	
+app.use('/', require('./routers/main'));  		// 首页访问路径：localhost:8081/
+app.use('/admin', require('./routers/admin'));		// admin访问路径：localhost:8081/admin
+app.use('/api', require('./routers/api'));		// api访问路径：localhost:8081/api
+
+// 链接数据库,启动应用
+mongoose.connect('mongodb://localhost:27017/YQH', function(err){
+    if(err){
+        console.log('数据库链接失败')
+    }else{
+        console.log('数据库链接成功');
+        app.listen(8081)
+    }
+});
+
+[启动nodejs项目]：在app.js文件下面鼠标右键，点击"Run app.js"(webstrom启动方法)
+
+[步骤2]：在rotuers目录下去配置其他页面，比如main.js中写入
+let express = require('express');
+let router = express.Router();
+router.get('/', function(req, res, next){
+    res.render('main/index');	// 访问根路径时，输出views目录main文件夹下面的index.html页面给用户
+});
+module.exports = router;
+
+[步骤3]：在schemas目录下面的user.js中去定义数据表存储的结构，用户传人对应的key和value值，比如创建一个登陆的数据表
+var mongoose = require('mongoose');		// 使用mongoose 对数据库进行操作
+module.exports =  new mongoose.Schema({	// 定义用户表数据结构，数据结构会反应在数据库中
+    username: String,   // 用户名
+    password: String    // 密码
+});
+
+[步骤4]：在models目录下面的user.js中定义模型类（在这个目录下面对数据进行增、删等操作）
+var mongoose = require('mongoose');
+var usersSchema = require('../schemas/user');
+module.exports = mongoose.model('User', usersSchema);
+
+
+-----------------------------------------------------用户注册------------------------------------------------------------
+【用户注册逻辑】：注册新用户，并查看用户名是否已经被注册
+/*
+* 注册逻辑1: 基础逻辑
+*    1.用户名不能为空
+*    2.密码不能为空
+*    3.两次密码验证必须一致
+* 注册逻辑2: 数据库查询
+*    1.用户名是否已经被注册
+* 提示信息:
+*    1.在app.js文件里面设置bodyparser后，用户通过post提交的数据就保存在req.body中
+*    2.用户ajax请求的地址为：'/api/user/register'
+* */
+
+1）在app.js里面追加代码
+let bodyParser = require('body-parser');    	     // 加载body-parser，用来处理用户提交过来的数据
+app.use(bodyParser.urlencoded({extended:true}));     // 设置bodyParser（注意这个use要加在设置路由前面）
+
+app.use('/', require('./routers/main'));
+app.use('/admin', require('./routers/admin'));
+app.use('/api', require('./routers/api'));
+
+2）在routers目录下面的api.js里面写入代码
+let express = require('express');
+let router = express.Router();
+let responseData;   			// 设置返回给前端的数据格式
+router.use(function(req, res, next){
+    responseData = {
+        code : 0,
+        message : ''
+    };
+    next();
+});
+
+// 设置bodyParser后，用户提交的数据都保存在request.body里面
+router.post('/user/register', function(req, res, next){		
+    var username = req.body.username;
+    var password = req.body.password;
+    var repassword = req.body.repassword;
+
+    // 判断用户名是否为空
+    if(username === ''){
+        responseData.code = 1;
+        responseData.message = '用户名不能为空';
+        res.json(responseData);     // 如果用户名为空后，它会返回给前端
+        return;
+    }
+    // 判断密码是否为空
+    if(password === ''){
+        responseData.code = 2;
+        responseData.message = '密码不能为空';
+        res.json(responseData);     // 如果密码为空后，它会返回给前端
+        return;
+    }
+    // 两次密码输入必须一致
+    if(password !== repassword){
+        responseData.code = 3;
+        responseData.message = '密码不一致';
+        res.json(responseData);     // 如果密码不一致后，它会返回给前端
+        return;
+    }
+
+    responseData.message = '恭喜您注册成功';
+    res.json(responseData);
+});
+module.exports = router;
+
+
+3）用数据库查询，去查看用户名是否已经被注册了，需要引人数据库模型，通过模型类来操作
+let express = require('express');
+let router = express.Router();
+let User = require('../models/user');   // 引人模型类，操作数据库（通过它下面的方法对数据进行增、删、改、查）
+let responseData;   		        
+router.use(function(req, res, next){
+    responseData = {
+        code : 0,
+        message : ''
+    };
+    next();
+});
+
+router.post('/user/register', function(req, res, next){
+    var username = req.body.username;
+    var password = req.body.password;
+    var repassword = req.body.repassword;
+
+    ........省略上面的部分代码
+
+    // 使用模型类下面的方法去查询数据( Model.findOne(查询对象，回调函数)
+    User.findOne({
+        username: username           // 查询username值 (这个用户名的数据名，是在定义数据表结构时定义好的名字)
+    }).then(function(userInfo){      // userInfo保存着查找到的用户数据，没有找到返回null
+        // （1）数据库中有该用户，直接返回提示信息
+        if (userInfo){
+            responseData.code = 4;
+            responseData.message = '用户名已经注册';
+            res.json(responseData);
+            return;
+        }
+        // （2）数据库中没有该数据，那么要保存该数据到数据库中（Robomongo数据库软件中的Collections里面就会生成数据表格）
+        let user = new User({
+            username: username,           // 用户名
+            password: password            // 密码
+        });
+        return user.save();               // save方法保存数据到mongodb中
+    }).then(function(newUserInfo){     	  // newUserInfo参数保存查询到的数据
+        responseData.message = '恭喜您注册成功';
+        res.json(responseData);
+        return;
+    });
+});
+module.exports = router;
+
+
+-----------------------------------------------------用户登陆------------------------------------------------------------
+【用户登陆逻辑】：查询数据库中是否有匹配的用户名和密码
+
+// 用户登陆，追加到上面的代码中即可
+router.post('/user/login', function(req, res, next){
+    var username = req.body.username;
+    var password = req.body.password;
+    if (username === '' || password === ''){
+        responseData.code = 1;
+        responseData.message = '用户名和密码不能为空';
+        res.json(responseData);
+        return;
+    }
+
+    // 查询数据库中相同用户名和密码的数据是否存在
+    User.findOne({
+        username: username,
+        password: password
+    }).then(function(userInfo){
+        // 用户名和密码和数据库匹配 成功
+        if (userInfo){
+            responseData.message = '登陆成功';
+            responseData.userInfo = {
+                _id : userInfo.id,
+                username : userInfo.username
+            };
+            res.json(responseData);
+            return;
+        }
+        // 用户名和密码和数据库匹配 不成功
+        if (!userInfo){
+            responseData.code = 2;
+            responseData.message = '用户名或密码错误';
+            res.json(responseData);
+            return;
+        }
+    })
+});
+
+
+-----------------------------------------------------用户cookies设置------------------------------------------------------------
+【用户cookies逻辑】：记录登陆成功的状态
+1）在app.js里面追加代码，加载cookies模块，并设置cookies，通过它下面的set和get方法去设置和获取cookie
+let Cookies = require('cookies');           	  // 加载cookies模块
+.......
+app.use(function(req, res, next){                  // 设置cookies
+    req.cookies = new Cookies(req, res);       // 通过它下面的set和get方法去设置和获取cookie
+    // 解析用户的cookie登录信息
+    req.userInfo = {};			  // 在req全局下设置一个自定义属性，让其他模版页面可以通过req.userInof访问到
+    if (req.cookies.get('userInfo')){                 // 如果第一次访问存在一个userInfo的cookie
+        try {
+            req.userInfo = JSON.parse(req.cookies.get('userInfo'))
+        } catch(e) {}
+    }
+    next();
+});
+
+2）在用户登陆成功后，设置cookie，在api.js里面追加代码
+req.cookies.set('userInfo', JSON.stringify({
+        _id: userInfo._id,
+        username: userInfo.username
+}));
+
+3）在路由页面routers里面的main.js路由主页面设置第二个参数，这个参数就相当于分配给它的数据
+let express = require('express');
+let router = express.Router();
+router.get('/', function(req, res, next){
+    res.render('main/index', {
+        userInfo: req.userInfo	
+    });
+});
+module.exports = router;
+
+4）使用ejs模版语法去渲染html页面（userInfo为模板页面第二个参数分配的数据）
+{% if userInfo.id %}
+    （里面数据可以使用{{userInof.message}}的形式去渲染）
+    （如果这个userInfo下面的id属性存在，则渲染这里面的html结构）
+{% else %}
+    （如果这个userInfo下面的id属性不存在，则渲染这里面的html结构）	
+{% endif %}
+
+5） 在api.js里面追加用户退出，清除cookie值，用户采用get请求即可
+router.get('/user/logout', function(req, res){
+    req.cookies.set('userInfo', null);
+    responseData.message = '退出成功';
+    res.json(responseData);
+});
+
+
+-----------------------------------------------------登录时普通用户和管理员用户-------------------------------------------------
+【设置用户权限】：注意不要把管理员账号放在cookies里面，必须实时验证
+
+【在Robomong软件中添加数据的方法】：鼠标右键，点击“Inset Document...”即可
+{
+    "username": "admin",
+    "password": "19880719",
+    "isAdmin": true
+}
+
+1）在定义用户信息schemas文件下的users.js里面添加用户权限信息
+var mongoose = require('mongoose');
+// 定义用户表数据结构，数据结构会反应在数据库中
+module.exports =  new mongoose.Schema({
+    username: String,    // 用户名
+    password: String,    // 密码
+    isAdmin: {           // 用户权限，默认没有权限
+        type: Boolean,
+        default: false
+    }
+});
+
+2）在页面加载时需要验证用户权限信息，在app.js主文件下面设置cookies时追加代码
+let User = require('./models/user');        	   // 引入用户模型
+.......
+app.use(function(req, res, next){                  // 设置cookies
+    req.cookies = new Cookies(req, res);       // 通过它下面的set和get方法去设置和获取cookie
+    // 解析用户的cookie登录信息
+    req.userInfo = {};
+    if (req.cookies.get('userInfo')){                 // 如果第一次访问存在一个userInfo的cookie
+        try {
+            req.userInfo = JSON.parse(req.cookies.get('userInfo'));
+            // 给req.userInfo下面新增一个isAdmin数据，用来做判断当前用户是否是管理员用的
+            User.findById(req.userInfo._id).then(function(userInfo){
+                req.userInfo.isAdmin = Boolean(userInfo.isAdmin);
+                next();
+            })
+        } catch(e) {
+            next();
+        }
+    }else{
+        next();
+    }
+});
+
+3）通过第2步就可以给每一个req.userInfo里面都绑定上每个用户的admin属性，然后通过ejs或其他的模板引擎去渲染属于管理员的html结构就可以了
+
+
+
+-----------------------------------------------------后台管理功能------------------------------------------------------------
+
+【后台管理功能和界面搭建】：routers下面的admin.js为后台管理逻辑接口，views里面的admin文件夹下面的index.html为首页
+1）在routers路由里面的admin.js管理逻辑里面先验证用户信息
+let express = require('express');
+let router = express.Router();
+router.use(function(req, res, next){
+    if (!req.userInfo.isAdmin){		// 如果用户 非 管理员身份
+        res.send('对不起你不是管理员');
+        return;
+    }
+    next();
+});
+router.get('/', function(req, res, next){
+    res.render('admin/index');		// 如果用户 是 管理员身份，那么就显示views文件夹下面的admin文件夹下面的index.html
+});
+module.exports = router;
+
+
+【获取用户列表】：在后台管理界面，点击“用户管理”按钮，列出所有注册用户的信息
+let express = require('express');
+let router = express.Router();
+let User = require('../models/user.js');	// 引入模型类，操作数据库
+........
+// 后台主页面
+router.get('/', function(req, res, next){
+    res.render('admin/index',{
+        userInfo: req.userInfo
+    });
+});
+
+/*
+* "用户管理"页面，需要从数据库中获取数据，然后分配给模板，在渲染到页面中
+* User.find().then(xxxx)             查找全部数据
+* User.find().limit(3).then(xxxx)    查找全部数据,并只推送前3条数据过来
+* User.find().skip(3).then(xxxx)     查找全部数据,并从第4条开始推送
+* */
+router.get('/user', function(req, res, next){
+    User.find().then(function(users){
+        res.render('admin/user_index',{
+            userInfo: req.userInfo,
+            users: users		// 用户数据保存在users里面，在html页面使用{{users.....}}去访问
+        });
+    });
+});
+module.exports = router;
+
+<!--使用ejs渲染数据到html页面-->
+{% for item in users %}
+	<p>{{item.username}}</p>
+{% endfor %}
+
+
+【用户信息分页展示】：逻辑=>（当前页 - 1）*每页显示条数
+1）修改上面的代码，改为分页处理
+router.get('/user', function(req, res, next){
+    let page = Number(req.query.page) || 1;
+    let limit = 5;                         // 显示条数
+    let pages = 0;                       // 总页数
+    // 获取数据总条数User.count()，限制 page 的大值
+    User.count().then(function(count){      // count里面保存数据的总数
+        pages = Math.ceil(count/limit);       // 总页数
+        page = Math.min(page, pages);      // 取值不能超过总页数
+        page = Math.max(1, page);             // 取值不能小于1
+        let skip = (page - 1) * limit;             // 从数据中哪一条数据开始推送
+        // 通过page变量和一些User方法的使用，实现数据的筛选
+        User.find().limit(limit).skip(skip).then(function(users){
+            res.render('admin/user_index',{
+                userInfo: req.userInfo,
+                users: users,
+                page: page,
+                count: count,
+                limit: limit,
+                pages: pages
+            });
+        });
+    });
+});
+（提示：req.query保存着url里面的screech对象，比如url=/admin/user?page=1，那么req.query={page:1} 字符串）
+
+2）修改分页html的“上一页”和“下一页”的a标签href值，通过href值带的page参数，去改变上面的page变量
+<a href="/admin/user?page={{page-1}}">上一页</a>
+<a href="/admin/user?page={{page+1}}">下一页</a>
+
+
+-----------------------------------------------------后台管理-分类功能------------------------------------------------------------
+【博客内容分类】：假设个人博客有HTML、CSS等分类显示在首页tab切换部分
+
+【添加分类功能】：用户通过post方式，提交到当前页面地址，routers文件夹的admin.js里面追加代码
+// 提前定义好数据结构和数据模型类，然后引人模型类
+let Category = require('../models/Category.js');	
+........
+// 用户通过post方式，提交到当前页面地址，来添加分类数据
+router.post('/category/add', function(req, res){
+    let name = req.body.name;
+    // 分类名称在数据库中是否存在
+    Category.findOne({
+        name: name
+    }).then(function(rs){
+        if(rs){     // 分类名称已使用
+            res.render('admin/error',{
+                userInfo: req.userInfo,
+                message:'分类名称以使用，请重新输入'
+            });
+            return Promise.reject();
+        }else{      // 分类名称没有使用，保存数据到数据库中
+             var cate = new Category({
+                name:name
+             });
+             return cate.save();
+        }
+    }).then(function(newCategory){      // 保存成功后，返回信息
+        res.render('admin/success',{
+            userInfo: req.userInfo,
+            message:'分类创建成功',
+            url:'/'
+        })
+    })
+});
+
+
+【渲染分类数据】：假设有一个渲染分类的页面
+// 后台"分类管理-分类首页" 查询数据库，分类首页页面
+router.get('/category', function(req, res, next){
+    let categories;
+    Category.find().then(function(categoryList){
+        categories = categoryList;
+        res.render('admin/category_index',{
+            userInfo: req.userInfo,
+            categories: categories		// 像category_index.html页面发送分类数据
+        });
+    });
+});
+
+
+【数据的修改和保存功能】：通过数据的id值去查询数据库，然后用模型类做处理
+（假设存在一个修改按钮：<a href="xxxx?id=数据库中的id值">修改</a>）
+
+// 点击修改分类按钮，查询数据是否存在，如果存在则跳转到修改数据的页面
+router.get('/category/edit', function(req, res){
+    let id = req.query.id || '';
+    Category.findOne({
+        _id: id
+    }).then(function(category){
+        if(!category){
+            res.render('admin/error',{
+                userInfo: req.userInfo,
+                message: '分类信息不存在'
+            });
+        }else{
+            res.render('admin/category_edit',{
+                userInfo: req.userInfo,
+                message: '分类信息存在',
+                category: category
+            });
+        }
+    })
+});
+
+// 在修改分类的页面里面，点击form表单提交修改数据
+router.post('/category/edit', function(req, res){
+    let id = req.query.id || '';
+    let name = req.body.name || '';
+    // 分类ID在数据库中是否存在
+    Category.findOne({
+        _id: id
+    }).then(function(category){
+        if(!category){
+            res.render('admin/error',{
+                userInfo: req.userInfo,
+                message:'分类信息不存在'
+            });
+            return Promise.reject();
+        }else{
+                // 1）用户不做任何修改直接提交时
+            if(name === category.name){
+                res.render('admin/success',{
+                    userInfo: req.userInfo,
+                    message:'修改成功',
+                    url:'/admin/category'
+                });
+                return Promise.reject();
+            }else{
+                // 2）修改的数据名称和数据库中的某个数据重名了（数据id不一样，只是名字一样）
+                return Category.findOne({   // 这里用了return 那么查询成功后会调用最后一个then方法
+                    _id: {$ne: id},                   // id不等于当前id
+                    name: name                   // 名称相同
+                })
+            }
+        }
+    }).then(function(sameCategory){
+        if(sameCategory){       // 已经有同名的数据 不能用
+            res.render('admin/error',{
+                userInfo: req.userInfo,
+                message:'该名称已被使用，请重新输入'
+            });
+            return Promise.reject();
+        }else{                            // 没有同名的数据 可以用
+            return Category.update({
+                _id: id                   // 要修改数据的_id值必须是获取到的id
+            },{
+                name: name        	  // 上面条件成立后，修改数据库中的名字
+            })
+        }
+    }).then(function(){
+        res.render('admin/success',{
+            userInfo: req.userInfo,
+            message:'分类名称修改成功',
+            url:'/admin/category'
+        });
+    })
+});
+
+
+【数据的删除功能】：（假设存在一个修改按钮：<a href="xxxx?id=数据库中的id值">删除</a>）
+router.get('/category/delete', function(req, res){
+    let id = req.query.id || '';
+    // 要删除的分类id在数据库中是否存在
+    Category.findOne({
+        _id: id
+    }).then(function(rs){
+        if(!rs){
+            res.render('admin/error',{
+                userInfo: req.userInfo,
+                message:'分类信息不存在，无法删除这个分类'
+            });
+            return Promise.reject();
+        }else{
+            return Category.remove({
+                _id: id
+            })
+        }
+    }).then(function(){
+        res.render('admin/success',{
+            userInfo: req.userInfo,
+            message:'分类名称删除成功',
+            url:'/admin/category'
+        });
+    })
+});
+
+
+--------------------------------------------------------数据的排序功能-----------------------------------------------------------
+【简介】：在像数据库中添加数据时，都会自动绑定一个唯一的_id值，那么这个值里面添加有一个时间戳，最新添加的数据，这个时间戳
+越大，所以可以通过这个唯一的id值中的时间戳去对数据进行排序，或者自己选择一个数据中的字段去排序。
+模型类下面的sort方法接受一个对象参数，值为1或者-1。
+
+模型类.find().sort({_id: -1}).then(function(){xxxxx})	// （降序排列：最新添加的数据在数据对象的最前面）
+模型类.find().sort({_id: 1}).then(function(){xxxxx})	// （升序排列：最新添加的数据在数据对象的最后面）
+	
+
+------------------------------------------------关联数据表功能-------------------------------------------------------
+【简介】：让A数据库通过B数据库的id值 关联上B数据库中的对应数据
+1）定义数据结构，在schemas文件夹下面创建新的定义数据结构的js文件：A和B
+[B数据结构]：
+let mongoose = require('mongoose');
+module.exports =  new mongoose.Schema({
+    name: String
+});
+
+[A数据结构]：
+let mongoose = require('mongoose');
+module.exports =  new mongoose.Schema({
+     Amodule: {					// 注意这个字段在下面会用到
+        type: mongoose.Schema.Types.ObjectId,   // 类型
+        ref: 'B的模型类名称'                     // 引用
+    },
+    name: String
+});
+
+[在操作A数据库时使用populate]：假设A数据库中保存着B数据库数据的某个ID值
+Content.find().populate('Amodule').then(function(contents){xxxxx}、
+最后返回的contents数据里面就包含对应ID的B数据库中的数据对象
+
+
+------------------------------------------------数据信息的扩展-------------------------------------------------------
+【添加日期信息】：
+1）在模型类下面定义数据结构
+addTime: {
+    type: Date,
+    default: new Date()
+}
+2）在html页面解析这个Date时间：{{ 时间数据|date('Y年m月d日 H:i:s', -8*60) }}
+提示：模版自带的解析方法，全部在node_modules-swig-lib-filters.js文件里面，其中就又date方法
+
+【添加数据的用户信息】：
+1）在模型类下面定义数据结构
+user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'	// 这里可以关联用户信息的数据库
+}
+2）在保存数据时，把user数据保存为req.userInof用户信息即可（或者保存为：req.userInof._id.toString()）
+3）在渲染数据时，记得解析这个关联数据，用populate(['user'])，这样数据中就有了一个完整的用户信息了
+
+
+【数据的查询条件】：.where(查询条件)
+如何查询条件为空，那么就忽略这个where查询，否则就以这个查询条件进行筛选数据
+
+模型类.where(查询条件).find().then(........)
+
+
+
+-----------------------------------------------------使用到的ejs模板引擎------------------------------------------------------------
+【1】使用ejs模版语法去渲染html页面（判断一个数据的Boolean值去渲染不同的结构）
+{% if userInfo.id %}
+    （里面数据可以使用{{userInof.message}}的形式去渲染）
+    （如果这个userInfo下面的id属性存在，则渲染这里面的html结构）
+{% else %}
+    （如果这个userInfo下面的id属性不存在，则渲染这里面的html结构）	
+{% endif %}
+
+
+【2】提取公共结构，继承到不同页面：ejs继承功能
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>后台管理</title>
+</head>
+<body>
+	<div>我是所有页面公共内容区域</div>
+	{%block main%}{%endblock%}
+</body>
+</html>
+
+[ B.html页面要继承A.html页面的内容，并替换：{%block main%}{%endblock%} 这个部分 ]
+{% extends 'A.html' %}
+{% block main %}
+<p>我是替换A.html里面的站位部分的</p>
+{% endblock %}
+
+【3】B页面想要引人C页面的模版页面，在B页面添加以下代码即可
+{% include 'C.html' %}
+
+
+【4】渲染数据到html页面
+{% for item in users %}
+	<p>{{item.username}}</p>
+{% endfor %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

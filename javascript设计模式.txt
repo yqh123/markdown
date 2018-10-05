@@ -1,0 +1,780 @@
+/*------------------------------------------------面向对象的javascript--------------------------------------------------*/
+
+<!--starte-->
+【@】多态：同一操作作用于不同对象，会得到不同的解释和执行结果。(给不同的对象发送同一条指令，会得到不同的反馈)
+
+【@】简单的多态
+var goole={
+	show:function(){
+		alert('goole')
+	}
+}
+
+var baidu={
+	show:function(){
+		alert('baidu')
+	}
+}
+
+var reader=function(type){
+	if(type=='goole'){
+		goole.show();
+	}else if(type=='baidu'){
+		baidu.show();
+	}
+}
+
+reader('goole');
+reader('baidu');
+
+(提示：上面的代码有个问题，就是核心函数reader里面的if语句，如果有其他成员加入时，它就会变得不可控，代码也会越来越臃肿)
+
+[改写上面的多态]：
+var goole={
+	show:function(){
+		alert('goole')
+	}
+}
+
+var baidu={
+	show:function(){
+		alert('baidu')
+	}
+}
+
+var reader=function(fn){
+	if(fn.show instanceof Function){
+		return fn.show();
+	};
+}
+
+reader(goole);
+reader(baidu);
+
+(提示：通过改写后的代码，核心代码reader函数不会因为成员的变动而发生变化)
+
+
+【@】arguments类数组对象：
+1---arguments对象能够读取参数，也能够改写传人的参数，能像数组那样通过下标去查找参数
+2---它并非一个真正的数组，它不能实现数组下面的排序或添加元素、删除等功能
+
+【@】Array.prototype方法对对象的作用:
+1---Array.prototype.push.call(obj,参数)		// 给obj添加新的参数，并返回修改后的obj.length属性
+2---Array.prototype.shift.call(obj)		// 删除obj对象里面的第一个属性，并返回这个被删除的属性的属性值
+3---Array.prototype.slice.call(obj,1)		// 从下标为1的地方开始截取，并转换成真正的数组,并返回这个截取到的数组
+
+[实例]:
+var obj={};
+
+Array.prototype.push.call(obj,'小明');
+Array.prototype.push.call(obj,20);
+Array.prototype.shift.call(obj)
+var arrObj=Array.prototype.slice.call(obj);
+
+console.log(obj)		// Object {0: "小明", 1: 20, length: 2}
+console.log(arrObj)		// ["小明", 20]
+
+
+【@】对arguments进行操作：
+1---Array.prototype.push.call(arguments,参数)	// 给arguments添加新的参数，并返回修改后的arguments.length属性
+2---Array.prototype.shift.call(arguments)	// 删除arguments类数组里面的第一个参数，并返回这个被删除的参数
+3---Array.prototype.slice.call(arguments)	// 把arguments对象转换成真正的数组,并返回这个数组
+
+[实例]:
+(function(){
+	Array.prototype.push.call(arguments,3);		
+	var arr=Array.prototype.slice.call(arguments);
+	console.log(arguments)			// [1, 2, 3] ---> 不是真正的数组，而是类数组 arguments.constructor==function Object() { [native code] }
+	console.log(arr)			// [1, 2, 3] ---> 真正的数组
+})(1,2);
+
+<!--end-->
+
+
+<!--starte-->
+【闭包】：有权访问其他作用域中的变量
+
+【@】闭包的作用：
+1---实现一个数值相互乘级的运算
+var mult=function(){
+	var a=1;
+	for( var i=0,len=arguments.length; i<len; i++ ){
+		a=a*arguments[i];
+	}
+	return a;
+};
+console.log( mult(2,3,4) )	// 24
+console.log( mult(2,3,4) )	// 24
+
+2---改写上面的代码，因为觉得参数相同的运算中，只运算一次就够了，可以优化代码
+var cache={};
+var mult=function(){
+	var args=Array.prototype.join.call(arguments,',');	// 给对象添加属性
+	if(cache[args]){		// 通过给cache对象添加的属性，判断是否有重复运算
+		return cache[args];
+	}
+
+	var a=1;
+	for( var i=0,len=arguments.length; i<len; i++ ){
+		a=a*arguments[i];
+	}
+	return cache[args]=a;		// 给对象添加的属性添加属性值		
+};
+
+console.log( mult(2,3,4) )	// 24	正常运算得到的值
+console.log( mult(2,3,4) )	// 24   这个24来自于对象cache里面的 '2,3,4':24 属性值
+console.log( cache )		// Object {2,3,4: 24}
+
+3---继续改写上面的代码，不要让cache对象暴露在全局下
+var mult=(function(){
+	var cache={};
+	return function(){
+		var args=Array.prototype.join.call(arguments,',');
+		if(cache[args]){
+			return cache[args]
+		}
+		var a=1;
+		for( var i=0,len=arguments.length; i<len; i++ ){
+			a=a*arguments[i];
+		}
+		return cache[args]=a;
+	}
+})();
+
+console.log( mult(2,3,4) )	// 24
+<!--end-->
+
+<!--starte-->
+【@】高阶函数：1-函数可以作为参数传递；2-函数可以作为返回值被返回
+
+【@】用原生函数去实现一个函数的链式调用：
+Function.prototype.chainFn=function(fn){
+	var This=this;
+	return function(){
+		This.apply(this,arguments);
+		return fn.apply(This,arguments);
+	};
+}
+
+// 链式调用，并按顺序执行，可以单独使用，也可以组合使用
+var fn=function(){
+	console.log(1)
+}.chainFn(function(){
+	console.log(2)
+}).chainFn(function(){
+	console.log(3)
+})();
+<!--end-->
+
+
+【@】原型模式：
+1---javascript是基于原型的面向对象编程
+2---它是一种创建对象的模式，可以通过克隆来创建一个一模一样的对象
+
+[核心架构]
+1---所有的数据都是对象
+2---要得到一个对象，是通过另一个对象的原型并克隆它(底层原型Object.prototype)
+3---如果对象自身没有指定的属性或方法，那么它会通过原型链_proto_，去委托给他自己的原型
+
+function A(){
+	this.name='小明';
+}
+A.prototype.sex=function(){
+	return '男';
+}
+var a=new A();
+a.name;		// 小明
+a.sex();	// 男
+
+【@】原型模式继承：
+function A(){
+	this.name='小明';
+}
+A.prototype.sex=function(){
+	return '男';
+}
+function B(){};
+B.prototype=new A();
+
+var b=new B();
+b.name;		// 小明
+b.sex();	// 男
+
+
+/*-------------------------------------------------------end-----------------------------------------------------------*/
+
+
+
+
+
+
+
+
+
+/*---------------------------------------------【设计模式-单例模式】---------------------------------------------------*/
+
+【定义】：确保只有一个实例，并提供全局访问
+
+【单例模式的核心】：使用闭包来存储该单例，用作判断单例是否已经生成，是单例模式主要的实现思路
+
+【最简单的单例模式】: 所有的全局变量
+
+【实际用处】：在页面中保证唯一性，比如：在页面中点击某个按钮创建一个div元素，但重复点击按钮时，只要这个div元素存在，就不执行创建这个div元素的代码，除非div不存在
+
+【实例】：保证唯一性
+function A(name){
+	this.name=name;
+}
+
+var a=new A('小明');
+var b=new A('小红');
+console.log(a===b);	// false
+
+[改写]
+function A(name){
+	this.name=name;
+	if(!A.instance){
+		A.instance=this;   --> 这里只要等于一个相同的引用类型即可，比如{}
+	}
+	return A.instance;
+}
+
+var a=new A('小明');
+var b=new A('小红');
+console.log(a===b);	// true
+
+【实例】：在页面中创建唯一的div元素
+var getSingle=function(fn){
+	var result;
+	return function(){
+		return result || ( result=fn.apply(this,arguments) );
+	}
+};
+
+var CreateDiv=function(){
+	var div=document.createElement('div');
+	div.innerHTML='我是登录框';
+	document.body.appendChild(div);
+	return div;	// 这里只要返回真即可(引用类型)
+};
+
+var creatSingle=getSingle(CreateDiv);
+document.getElementById('btn').onclick=function(){
+	creatSingle();
+}
+
+(提示1：把创建对象的函数CreateDiv和管理单例的职责getSingle函数分离)
+(提示2：不管你点击多少次按钮，getSingle函数只会执行一次CreateDiv函数，因为只会的getSingle函数被他里面的变量result给承包了，而result只要为真，那么它就不会管事)
+
+【项目实例-普通函数模式】：点击按钮，弹出一个div登录框
+
+// start：运用单体模式 保证 instance 的变量在true和false之间转换
+var instance;
+function getSingle(fn){
+	if(!instance){
+		instance= instance || ( instance=fn.apply(this,arguments) );
+	}
+	return instance;
+}
+// end
+
+function creatDiv(){
+	var oN;
+	var oDiv=document.createElement('div');
+	oDiv.id='divOpen';
+	oDiv.innerHTML='<div class="divOpen">\
+				<p>电视剧</p>\
+				<span id="close">X</span>\
+			</div>';
+	document.body.appendChild(oDiv);
+
+	var close=document.getElementById('close');
+	close.onclick=function(){
+		oDiv.remove();
+		this.onclick=null;
+		return instance=false;
+	}
+
+	return instance=true;
+}
+
+document.getElementById('btnOpen').onclick=function(){
+	getSingle(creatDiv)
+}
+
+上面的普通写法用一个好处和一个坏处：
+	好处：页面中的任何元素只要调用 creatSingle 方法控制的是同一个实例，不会因为多个元素调用这个方法而出现错误
+	坏处：instance全局变量和其他全局函数容易被污染
+
+
+【项目实例-构造函数模式】：改写上面的例子
+
+function CreateTV(){
+	var This=this;
+	this.opt={ name:'默认电视剧' }
+	this.oDiv=null;
+	this.oClose=null;
+	// start：单例模式，保证所有通过 new CreateTV();创建出来的实例都是同一个实例
+	if(!CreateTV.oN){
+		CreateTV.oN=this;  
+	}
+	return CreateTV.oN;
+	// end
+}
+
+CreateTV.prototype.instance=true;
+
+CreateTV.prototype.init=function(opt){
+	var This=this;
+	extend(This.opt,opt);		// 利用对象继承去配置默认参数
+	if(!This.instance) return;	
+	This.open();
+	This.close();
+};
+
+CreateTV.prototype.open=function(){
+	var This=this;
+	this.oDiv=document.createElement('div');
+	this.oDiv.id='divOpen';
+	this.oDiv.innerHTML='<div class="divOpen">\
+				   <p>'+This.opt.name+'</p>\
+				   <span id="close">X</span>\
+			     </div>';
+	document.body.appendChild(this.oDiv);
+	This.instance=false;		
+};
+
+CreateTV.prototype.close=function(){
+	var This=this;
+	this.oClose=document.getElementById('close');
+	this.oClose.onclick=function(){
+		This.oDiv.remove();
+		this.onclick=null;	// 防止闭包环境下的内存泄漏
+		This.instance=true;	
+	}
+};
+
+function extend(obj1,obj2){		// 简单的对象属性继承函数
+	for(var attr in obj2){
+		obj1[attr]=obj2[attr];
+	}
+}
+
+document.getElementById('btnOpen').onclick=function(){
+	var getTV=new CreateTV();
+	getTV.init({ name:'动作片' });
+};
+
+document.getElementById('btnOpen2').onclick=function(){
+	var getTV=new CreateTV();
+	getTV.init({ name:'科幻片' });
+};
+
+/*------------------------------------------------------end-----------------------------------------------------------*/
+
+
+/*---------------------------------------------【设计模式-策略模式】---------------------------------------------------*/
+
+【定义】：定义一系列算法，把它们一个个封装起来，并使他们之间可以相互替换(业务逻辑与实现进行分离)
+
+【实例1】：普通的年终奖计算分为 A B 至少两个等级
+function numberA(salary){
+	return salary * 4;
+}
+function numberB(salary){
+	return salary * 3;
+}
+
+var calculateBonus=function(performanceLevel,salary){
+	if( performanceLevel == 'A' ){
+		return numberA(salary);
+	}
+	if( performanceLevel == 'B' ){
+		return numberB(salary);
+	}
+};
+
+var a=calculateBonus('A',20000);
+var b=calculateBonus('B',10000);
+
+上面的普通写法有一个问题：calculateBonus函数会因为等级的增加而不变得庞大，不好维护
+
+【实例2】：用策略模式，对算法和实现进行分离，让calculateBonus函数不变
+var strategies={
+	"A":function(salary){
+		return salary * 4;
+	},
+	"B":function(salary){
+		return salary * 3;
+	}
+};
+
+var calculateBonus=function(prev,cur){
+	return strategies[prev](cur);
+};
+
+var a=calculateBonus('A',20000);
+var b=calculateBonus('B',10000);
+
+
+【实例3】：利用策略模式做表单验证
+表单的很多文本输入元素都需要验证，而且验证方式不一样，后期修改的可能性也比较大，通过策略模式把验证机制和执行机制分离开来是很好的处理方式。
+所以更好的做法是把每种验证规则都用策略模式单独的封装起来。
+
+<body>
+    <form id = "registerForm" method="post" action="http://xxxx.com/api/register">
+        用户名：<input type="text" name="userName">
+        密码：<input type="text" name="password">
+        手机号码：<input type="text" name="phoneNumber">
+        <button type="submit">提交</button>
+    </form>
+    <script type="text/javascript">
+        // 策略对象
+        var strategies = {
+            isNoEmpty: function (value, errorMsg) {
+                if (value === '') {
+                    return errorMsg;
+                }
+            },
+            isNoSpace: function (value, errorMsg) {
+                if (value.trim() === '') {
+                    return errorMsg;
+                }
+            },
+            minLength: function (value, length, errorMsg) {
+                if (value.trim().length < length) {
+                    return errorMsg;
+                }
+            },
+            maxLength: function (value, length, errorMsg) {
+                if (value.length > length) {
+                    return errorMsg;
+                }
+            },
+            isMobile: function (value, errorMsg) {
+                if (!/^(13[0-9]|14[5|7]|15[0|1|2|3|5|6|7|8|9]|17[7]|18[0|1|2|3|5|6|7|8|9])\d{8}$/.test(value)) {
+                    return errorMsg;
+                }                
+            }
+        }
+
+        // 验证类
+        var Validator = function() {
+            this.cache = [];
+        }
+        Validator.prototype.add = function(dom, rules) {
+            var self = this;
+            for(var i = 0, rule; rule = rules[i++];) {
+                (function(rule) {
+                   var strategyAry = rule.strategy.split(':');
+                   var errorMsg = rule.errorMsg;
+                   self.cache.push(function() {
+                    var strategy = strategyAry.shift();
+                    strategyAry.unshift(dom.value);
+                    strategyAry.push(errorMsg);
+                    return strategies[strategy].apply(dom, strategyAry);
+                   })
+                })(rule)
+            }
+        };
+        Validator.prototype.start = function() {
+            for(var i = 0, validatorFunc; validatorFunc = this.cache[i++];) {
+                var errorMsg = validatorFunc();
+                if (errorMsg) {
+                    return errorMsg;
+                }
+            }
+        };
+
+        // 调用代码
+        var registerForm = document.getElementById('registerForm');
+
+        var validataFunc = function() {
+            var validator = new Validator();
+            validator.add(registerForm.userName, [{
+                strategy: 'isNoEmpty',
+                errorMsg: '用户名不可为空'
+            }, {
+                strategy: 'isNoSpace',
+                errorMsg: '不允许以空白字符命名'
+            }, {
+                strategy: 'minLength:2',
+                errorMsg: '用户名长度不能小于2位'
+            }]);
+            validator.add(registerForm.password, [ {
+                strategy: 'minLength:6',
+                errorMsg: '密码长度不能小于6位'
+            }]);
+            validator.add(registerForm.phoneNumber, [{
+                strategy: 'isMobile',
+                errorMsg: '请输入正确的手机号码格式'
+            }]);
+            var errorMsg = validator.start();
+            return errorMsg;
+        }
+
+        registerForm.onsubmit = function() {
+            var errorMsg = validataFunc();
+            if (errorMsg) {
+                alert(errorMsg);
+                return false;
+            }
+        }
+    </script>
+</body>
+
+
+/*------------------------------------------------------end-----------------------------------------------------------*/
+
+
+
+/*---------------------------------------------【设计模式-代理模式】---------------------------------------------------*/
+
+【定义】：为实体对象提供一个代理机制，通过这个代理机制去访问实体对象
+
+【实例1】：屌丝给女神送礼物
+var flower='花';
+
+var loser={
+    setFlower:function(obj,gift){
+        obj.getFlower.call(this,gift);
+    }
+};
+
+var goddess={
+    getFlower:function(gift){
+        console.log('收到了礼物：'+gift);
+    }
+};
+
+loser.setFlower(goddess,flower);
+
+【实例2】：屌丝通过代理人给女神送礼物  ---> 中间人代理模式
+var flower='花';
+
+var loser={
+    setFlower:function(obj,gift){
+        obj.getFlower.call(this,gift);
+    }
+};
+
+var agent={			// 代理对象
+    getFlower:function(){
+        var gift=Array.prototype.slice.call(arguments);
+        var gifts=gift.join(',');
+        goddess.getFlower(gifts);
+    }
+};
+
+var goddess={			// 本体对象
+    getFlower:function(gift){
+        console.log('收到了礼物：'+gift);
+    }
+};
+
+loser.setFlower(agent,flower);		// 收到了礼物：花
+loser.setFlower(goddess,flower);	// 收到了礼物：花
+
+这样改写有两个好处：
+	1：代理对象对本体对象做了保护
+	2：代理对象和本体对象可以相互替换，执行结果一样
+
+
+【实例3】：防止重复计算  ---> 缓存代理
+var mult=(function(){
+    var cache={};
+    return function(){
+        var args=Array.prototype.join.call(arguments,',');
+        if(cache[args]){
+            return cache[args]
+        }
+        var a=1;
+        for( var i=0,len=arguments.length; i<len; i++ ){
+            a=a*arguments[i];
+        }
+        return cache[args]=a;
+    }
+})();
+
+console.log( mult(2,3,4) )  // 24   正常运算得到的值
+console.log( mult(2,3,4) )  // 24   这个24来自于对象cache里面的 '2,3,4':24 属性值
+console.log( cache )        // Object {2,3,4: 24}
+
+(提示：代理模式有很多形式，不必纠结什么时候引用代理模式，当你发现在实际项目中，直接访问实体对象而导致麻烦和后期不方便维护时，可以考虑代理模式)
+
+/*------------------------------------------------------end-----------------------------------------------------------*/
+
+
+
+/*---------------------------------------------【设计模式-迭代器模式】---------------------------------------------------*/
+
+【定义】：按照一定顺序循环访问对象的内部
+
+【常用迭代模式】：forEach  
+
+【迭代模式分类】：内部佚代模式  外部佚代模式
+1---内部佚代模式：内部已经定义好了循环访问过程，外部只需调用即可
+2---外部佚代模式：比较复杂
+
+【内部迭代模式】：
+var arr=[1,2,3,4,5];
+
+Array.prototype.each=function(callBack){
+    if(!this.length) return;
+    var This=this;
+    for(var i=0,len=this.length; i<len; i++){
+        callBack.call(This,this[i],i);
+    }
+};
+
+arr.each(function(element,index) {
+    console.log(element)
+});
+
+/*------------------------------------------------------end-------------------------------------------------------------*/
+
+
+
+/*---------------------------------------------【设计模式-观察者模式】---------------------------------------------------*/
+
+【定义】：观察者模式又叫发布订阅模式，它定义了一种一对多的关系，让多个观察者对象同时监听某一个主题对象，这个主题对象的状态发生变化时就会通知所有的观察者对象，使得它们能够自动更新自己
+
+【原生观察者模式】：元素.onclick=function(){xxxx}
+
+【常见观察者模式】：自定义事件
+
+【简单实例】：
+var salesOffices={};			// 主体对象
+
+salesOffices.arrListen=[];		// 缓存列表，存放订阅者回调函数集合
+
+salesOffices.addEvent=function(fn){	// 添加订阅者
+	this.arrListen.push(fn);
+};
+
+salesOffices.trigger=function(){	// 发布消息
+	for(var i=0,len=this.arrListen.length; i<len; i++){
+		this.arrListen[i].apply(this,arguments);
+	}
+};
+
+salesOffices.addEvent(function(){ console.log('小明订阅消息') });
+
+salesOffices.addEvent(function(){ console.log('小红订阅消息') });
+
+salesOffices.trigger();
+
+【项目实例】: 用户登录成功后，渲染用户名和用户头像、渲染购物车、渲染导航条等信息
+$.ajax('',function(data){
+	.......省略部分代码
+	loginScucc.addEvent('head',function(data){ console.log('头部显示订阅了消息') });
+	loginScucc.addEvent('city',function(data){ console.log('收货地址订阅了消息') });
+	loginScucc.addEvent('shoppingCart',function(data){ console.log('购物车订阅了消息') });
+	
+	loginScucc.loginTrigger();
+});
+
+/*------------------------------------------------------end-------------------------------------------------------------*/
+
+
+
+/*-----------------------------------------------【设计模式-命令模式】---------------------------------------------------*/
+
+【定义】：使操作和执行分离，便于扩展，修改；也就是说该模式旨在将同一系列的函数调用、请求和操作封装成一个单一的对象，然后对这个对象进行一些列的处理。
+
+【实例】：
+var MenuBar={
+	refersh:function(){
+		console.log('刷新页面')
+	}
+};
+
+var ReferBtnCommand=function(receiver){
+	return function(){
+		receiver.refersh();
+	}
+};
+
+var setCommand=function(btn,command){
+	btn.onclick=function(){
+		command();
+	};
+};
+
+var shuaXin=ReferBtnCommand(MenuBar);
+setCommand(oBtn1,shuaXin);
+
+/*------------------------------------------------------end-------------------------------------------------------------*/
+
+
+
+/*-----------------------------------------------【设计模式-模块模式】---------------------------------------------------*/
+
+【定义】：利用继承实现各个模块之间的公有属性或方法  构造函数.prototype=new 构造函数();
+
+【实例】：面向对象编程
+
+/*------------------------------------------------------end-------------------------------------------------------------*/
+
+
+
+/*-----------------------------------------------【设计模式-工厂模式】---------------------------------------------------*/
+
+【定义】：一个用于创建对象的接口，这个接口由子类决定实例化哪一个类。该模式使一个类的实例化延迟到了子类。而子类可以重写接口方法以便创建的时候指定自己的对象类型。
+
+var productManager = {};
+
+productManager.createProductA = function () {
+    console.log('ProductA');
+}
+
+productManager.createProductB = function () {
+    console.log('ProductB');
+}
+        
+productManager.factory = function (typeType) {
+    return new productManager[typeType];
+}
+
+productManager.factory("createProductA");
+
+/*------------------------------------------------------end-------------------------------------------------------------*/
+
+
+/*-----------------------------------------------【设计模式-享元模式】---------------------------------------------------*/
+
+【定义】：它是一种用于js优化的模式
+
+/*------------------------------------------------------end-------------------------------------------------------------*/
+
+
+
+
+/*-----------------------------------------------【设计原则和编程技巧】---------------------------------------------------*/
+
+
+/*-------------------------------------------------------end-------------------------------------------------------------*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

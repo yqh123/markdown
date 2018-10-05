@@ -1,0 +1,87 @@
+【简介】seaJs的作用：
+1---避免冲突(命名冲突)
+2---提高性能(同样的模块，只加载一次即可)
+3---解决js文件依赖问题(多人协同开发的js文件依赖)
+
+【如何使用】
+1---引入sea.js
+<script type="text/javascript" src="../js/sea.js"></script>
+
+2---如何变成模块？ define(在自己写的js文件中使用)
+define(function(require,exports,module){	//3个参数固定不变
+	function tab(){
+		alert(1)
+	};
+	exports.tab=tab;	//调用接口
+});
+
+
+3---如何调用模块？  exports   seajs.use
+01、在页面中调用：
+    第一个参数：模块地址(注意使用 ./ 或 ../)
+    第二个参数：地址加载成功后的回调函数,里面的参数里面就有你写的所有方法
+<script>
+	seajs.use('../js/index.js',function(ex){
+		ex.tab();
+	});
+</script>
+
+4---如何依赖模块？  require
+01、require(依赖的js文件地址).其他人写的方法();  		同步加载写法(不管有没有用到都会加载这个js文件)
+02、require.async(依赖的js文件地址,function(ex){		异步加载写法(用到这个方法时在加载这个js文件)
+	ex.方法();
+});
+【实例】
+
+//其他人写的模块 a.js
+define(function(require,exports,module){
+	function aaa(){
+		alert(123)
+	}
+	exports.aaa=aaa;
+}); 
+   
+//自己写的模块 b.js，然后去调用a.js里面的方法
+define(function(require,exports,module){
+	require('./a.js').aaa();
+	function bbb(){   //自己写的方法
+		alert(456)
+	};
+	exports.bbb=bbb;
+});
+
+//在页面中加载自己的js文件
+<script>
+	seajs.use('../js/b.js',function(ex){
+		ex.bbb();
+	});
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

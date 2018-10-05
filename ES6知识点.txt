@@ -1,0 +1,1243 @@
+【什么是ES6】：http://www.cnblogs.com/Wayou/p/es6_new_features.html
+·它是ES5之后的下一代javascript语言的标准
+·它的目标是编写更加复杂的大型应用程序，成为企业级开发语言
+
+
+【let变量】：
+
+1---使用let声明的变量只在所在的代码快内部有效，也就是说它支持块级作用域 (ES5没有块级作用域)
+{
+	let a=1;
+	console.log(a)	// 1
+}
+console.log(a)	// 报错
+
+2---使用let声明的变量在域解析的时候不会提升
+console.log(a)	// 报错
+let a=1;
+
+3---let不能在同一个作用域下去声明已经存在的变量
+function fn(){
+	let a=1;
+	let a=2;	// 报错
+}
+fn();
+
+function fn(){
+	var a=1;
+	let a=2;	// 报错
+}
+fn();
+
+[实例]:let在for循环中的使用
+var btn=document.querySelectorAll('button');
+for(var i=0,len=btn.length; i<len; i++){
+	btn[i].onclick=function(){
+		console.log(i)	// btn.length
+	}
+}
+
+var btn=document.querySelectorAll('button');
+for(let i=0,len=btn.length; i<len; i++){
+	btn[i].onclick=function(){
+		console.log(i)	// 正常弹出正确的值
+	}
+}
+
+for(let i=0; i<3; i++){
+	let i=10;
+	console.log(i)		// 10
+}
+console.log(i)			// 报错：i is not defined
+
+
+【const变量】：除了具备let上面的3个条件外，它还具备
+
+1---声明必须赋值
+var a;
+let b;
+const c;	// 报错
+
+2---声明的常量存储的值和数据类型都不能改变，如果存储的是对象，那么引用不可以被改变，至于对象里面的数据如何变化是没有关系的
+（const有一个很好的应用场景，就是当我们引用第三方库的时声明的变量，用const来声明可以避免未来不小心重命名而导致出现bug，因为声明的变量不能重复出现，并且不能改变它的值）
+
+const a=1;
+a=10;		// 报错
+
+const a=1;
+a='str';		// 报错
+
+const a={ name:'小明' };
+a={ name:'小红' };	// 报错：相当于修改了a对象的指针
+
+const a={ name:'小明' };
+a.name='小红';	// 可以
+
+const a={ name:'小明' };
+a.age=20;		// 可以
+
+
+【ES6中的解构赋值】：
+它主要分为3类：
+	1、数组的解构赋值
+	2、对象的解构赋值
+	3、基本类型的解构赋值
+
+1---数组的解构赋值：本质上是一种匹配模式，只要等号两边的模式相同，那么左边的变量就可以被赋予正确的值
+
+let [a,b,c]=[1,2,3];	
+console.log(a);		// 1
+console.log(b);		// 2
+console.log(c);		// 3			
+
+let [ a,[[b],c] ]=[ 1,[[2],3] ];
+console.log(a);		// 1
+console.log(b);		// 2	不是[2],因为它会在对[b]和[2]进行一次解构
+console.log(c);		// 3
+
+let [a=1]=[];
+console.log(a);		// 1	它可以指定变量的默认值
+
+let [a=1]=[2];
+console.log(a);		// 2	默认值被替换
+
+
+2---对象的解构赋值：
+
+let [a,b,c]=[{name:'小明'},{name:'小红'},{name:'小芳'}];	
+console.log(a);		// {name:'小明'}
+console.log(b);		// {name:'小红'}
+console.log(c);		// {name:'小芳'}
+
+let {a,b}={a:'小明',b:'小红'}  或者 {b:'小红',a:'小明'}
+console.log(a);		// 小明
+console.log(b);		// 小红
+
+let {a:b}={a:'小红'}
+console.log(b);		// 小红
+console.log(a);		// 报错：a is not defined
+
+
+2---基本类型的解构赋值：
+
+let [a,b,c]='str';	// 这里会把'str'字符串解析成['s','t','r']
+console.log(a);		// s
+console.log(b);		// t
+console.log(c);		// r
+
+let {length:len}='str';
+console.log(len);	// 3：相当于 len='str'.length
+
+let {toString:len}=1;
+console.log(len===Number.prototype.toString);	// true
+
+let [a]=null;
+console.log(a);		// 报错：null和undefined不能解构赋值
+
+
+【数据结构Set集合】：
+·集合概念：由一组无序并且不能重复的项组成
+·集合特点：key和value值相同，并且没有重复的value
+·ES6提供了Set数据结构，它类似于数组，但成员的值都是唯一的，没有重复的值
+
+1---创建Set数据结构(Set是一个构造函数)
+const s=new Set([1,2,3]);
+console.log(s);			// Set {1, 2, 3}
+
+2---Set数据结构不能重复，重复项会被删除
+const s=new Set([1,2,2]);
+console.log(s);			// Set {1, 2}
+
+3---Set 类的属性--->size
+const s=new Set([1,2,3]);
+console.log(s.size);			// 3：有3项唯一的值
+
+
+4---Set 类的添加方法--->add 
+[普通添加]：
+const s=new Set([1,2,3]);
+s.add(4);			// 它如果添加成功返回的是新组成的Set数据，否则为原Set数据
+console.log(s);			// Set {1, 2, 3, 4}
+
+[链式添加]：
+const s=new Set([1,2,3]);
+s.add(4).add(5);		
+console.log(s);			// Set {1, 2, 3, 4, 5}
+
+
+5---Set 类的删除方法--->delete
+[指定项删除(Set数据结构的下标从1开始)]：
+const s=new Set([1,2,3]);
+s.delete(2);			// 删除成功它会返回true，否则为false
+console.log(s);			// Set {1, 3}
+
+[不能链式删除]：
+const s=new Set([1,2,3]);
+s.delete(1).delete(2);		// 报错	
+
+
+6---Set 类的查找方法 has
+const s=new Set([1,2,3]);
+console.log(s.has(2));		// true：找到返回true，否则返回false
+
+
+7---Set 类的清空方法--->clear:清空所有数据，没有返回值或者说返回值为undefined
+const s=new Set([1,2,3]);
+s.clear();			// undefined
+console.log(s);			// Set {}
+
+
+8---Set 类的遍历器方法---> keys()  values()
+const s=new Set([1,2,3]);
+console.log(s.keys());			// SetIterator {1, 2, 3}
+console.log(s.values());		// SetIterator {1, 2, 3}
+
+
+9---Set 类的遍历器方法---> entries()     key值和value值相等，这样符号集合的特征
+const s=new Set(['a','b','c']);
+console.log(s.entries());		// SetIterator {["a", "a"], ["b", "b"], ["c", "c"]}
+
+
+10---Set 类的回调函数的遍历方法---> forEach() 
+const s=new Set(['a','b','c']);
+s.forEach(function(value,key,set){
+	console.log(value)		// 键值
+	console.log(key)		// 键名
+	console.log(set)		// Set数据本身
+});
+
+
+[实例]：利用Set方法进行数组去重	
+
+1---原生数组去重
+var arr=[1,2,2,3,5,5,4];
+var arrs=unique(arr);		// [1, 2, 3, 5, 4]
+function unique(array){ 
+	var n = []; 
+	//如果当前数组的第i已经保存进了临时数组，那么跳过，否则把当前项push到临时数组里面 
+	for(var i = 0,len=array.length; i <len; i++){
+		if (n.indexOf(array[i]) == -1) n.push(array[i]); 
+	} 
+	return n; 
+}
+
+2---Set数据集合进行数组去重
+var arr=[1,2,2,4,5,1,3,6,4];
+var arrs=[];
+const s=new Set(arr);			// Set {1, 2, 4, 5, 3, 6}
+s.forEach(function(value,key,set){
+	arrs.push(value)
+});
+console.log(arrs);			// [1, 2, 4, 5, 3, 6]
+
+
+【数据结构Map集合】：
+1---字典，是用来存储不重复key的Hash结构。不同于Set集合的是，字典是使用[键，值]的形式来存储数据的
+2---Object{}对象只能用字符串当做键，这给它的使用带来了很大的限制
+3---为了解决第2个带来的问题，ES6提供了Map数据结构，它类似于对象，也是键值对的集合，但它的‘键’的范围不仅限于字符串，各种类型的值(包括对象)，
+都可以当做键。也就是说Object结构提供了"字符串-值"的对应形式，而Map结构提供了"值-值"的对象形式，是一种更完善的Hash结构实现，如果你需要"键值对"
+的数据结构，那么Map比Object更适合
+
+[如何理解上面的话]：实例1-->给对象添加基本类型的属性
+var data1='a'; data2='b', obj={};
+obj[data1]=1;
+obj[data2]=2;
+console.log(obj);	// Object {a: 1, b: 2}
+(上面的代码没问题)
+
+[如何理解上面的话]：实例2-->给对象添加引用类型的属性
+var data1={a:1}; data2={b:2}, obj={};
+obj[data1]=1;
+obj[data2]=2;
+console.log(data1.toString());	// '[object Object]'
+console.log(data2.toString());	// '[object Object]'
+console.log(obj);		// Object {[object Object]: 2}
+(上面的代码有问题，因为如果添加的属性是引用类型的话，它会调用toString方法进行转换)
+
+
+[如何创建一个Map数据结构]：
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+console.log(map);	// Map {"a" => 1, "b" => 2}
+
+
+[Map数据结构的属性]：size-->代表当前数据结构里面数据的个数
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+console.log(map.size);	// 2
+
+
+[Map数据结构的方法]：set(key,value)
+定义：设置键名key对应的键值value，然后返回整个Map数据结构，如果key已经存在，则键值会被更新，否则就会生成该键;相当于添加和修改
+
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+map.set('c',3);
+console.log(map);	// Map {"a" => 1, "b" => 2, "c" => 3}
+
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+map.set('a',3);
+console.log(map);	// Map {"a" => 3, "b" => 2}
+
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+map.set('c',3).set('d',4);
+console.log(map);	// Map {"a" => 1, "b" => 2, "c" => 3, "d" => 4}
+
+
+[Map数据结构的方法]：get(key)
+定义：查找Map数据结构里面的数据，没有找到返回undefied
+
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);
+console.log(map.get('a'));		// 1
+console.log(map.get('c'));		// undefined
+
+
+[Map数据结构的方法]：delete(key)
+定义：删除Map数据结构里面的数据，删除成功返回true，失败返回false
+
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+map.delete('a');
+console.log(map);		// Map {"b" => 2}
+
+
+[Map数据结构的方法]：has(key)
+定义：查找Map数据结构里面的数据，成功返回true，失败返回false
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+console.log(map.has('a'));		// true
+console.log(map.has('c'));		// false
+
+
+[Map数据结构的方法]：clear()
+定义：清空Map数据结构里面的数据，没有返回值，或者返回值为undefined
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+map.clear();
+console.log(map);		// Map {}
+
+
+[Map数据结构的方法]：keys()  values()  entries()
+定义：都是用来遍历Map数据结构的方法
+
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+console.log(map.keys());		// 返回key值：MapIterator {"a", "b"}
+console.log(map.values());		// 返回键值： MapIterator {1, 2}
+console.log(map.entries());		// 返回数组键值对：MapIterator {["a", 1], ["b", 2]}
+
+
+[Map数据结构的方法]：forEach()
+定义：遍历循环Map数据结构里面的key值和value值
+
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+map.forEach(function(value,key,map){
+	console.log(value);		// 返回键名：1 2
+	console.log(key);		// 返回键值：a b
+	console.log(map);		// 返回map本身：Map {"a" => 1, "b" => 2}
+});
+
+
+[Map数据结构的使用注意事项1]：NaN的添加(NaN和NaN是不相等的，但Map的NaN数据属性是被认为是一样的)
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+map.set(NaN,10).set(NaN,100);
+console.log(map);		// Map {"a" => 1, "b" => 2, NaN => 100}
+
+[Map数据结构的使用注意事项2]：添加的是对象的属性的话，因为他们的引用地址不一样，所以Map数据结构会认为他们不一样
+const map=new Map([
+		['a',1],
+		['b',2]
+	]);	
+map.set({'c':3},3).set({'c':3},4);
+console.log(map);		// Map {"a" => 1, "b" => 2, Object {c: 3} => 3, Object {c: 3} => 4}
+
+
+
+【Iterator和for...of循环】：
+1---基本概念：在ES6中新增了Set和Map数据结构，加上JS之前的数组和对象，就用四种数据集合了，平时他们还能组合使用，这样就需要一种统一的接口机制来处理所有不同的数据结构。
+2---Iterator就是这样一种机制，它是一种接口，为各种不同的数据结构提供统一的访问机制。任何数据结构只要部署Iterator接口，就可以完成遍历操作，而这种遍历操作是**依次**处理该数据结构的所有成员。
+
+【Iterator遍历器的作用】：
+1---为各种数据结构提供统一的、简便的访问接口
+2---使得数据结构的成员能够按照某种次序排列
+3---ES6新增了遍历命令for...of循环，Iterator接口主要供for...of循环消费
+
+
+[实例]：数组的遍历过程
+const arr=[1,2,3];
+const it=iterator(arr);
+
+console.log(it.next());		// Object {value: 1, done: false}
+console.log(it.next());		// Object {value: 2, done: false}
+console.log(it.next());		// Object {value: 3, done: false}
+console.log(it.next());		// Object {value: undefined, done: true}
+
+function iterator(array){
+	let index=0;
+	return {
+		next:function(){
+			return index < array.length?
+			{value:array[index++],done:false}:
+			{value:undefined,done:true};
+		}
+	}
+}
+
+
+[Iterator的遍历过程]：
+1---创建一个指针对象，指向当前数据结构的起始位置。也就说，遍历器对象本质是一个指针对象。
+2---第一次调用指针对象的next方法，可以将指针指向数据结构的第一个成员。
+3---第二次调用指针对象的next方法，可以将指针指向数据结构的第二个成员。
+4---不断调用指针对象的next方法，直到它指向数据结构的最后一个成员为止。
+5---每次调用next方法，都会返回数据结构的当前成员信息。也就是返回一个包含value和done的两个属性对象
+，其中，value是当前成员的值，而done是一个布尔值，表示遍历是否结束。
+
+
+[什么样的数据结构具备Iterator接口]：凡是具有 Symbol.iterator 属性的数据结构都具备Iterator接口(JS对象{},不具备Symbol.iterator属性)
+const arr=[1,2];
+const set=new Set(['a','b']);
+const map=new Map([ ['a',1] ]);
+
+const itArr=arr[Symbol.iterator]();
+const itSet=set[Symbol.iterator]();
+const itMap=map[Symbol.iterator]();
+
+console.log(itArr);		// Array的Iterator指针：ArrayIterator {}
+console.log(itSet);		// Set的Iterator指针：SetIterator {"a", "b"}
+console.log(itMap);		// Map的Iterator指针：MapIterator {["a", 1]}
+
+console.log( itArr.next() );	// Object {value: 1, done: false}
+console.log( itArr.next() );	// Object {value: 2, done: false}
+console.log( itArr.next() );	// Object {value: undefined, done: true}
+
+console.log( itSet.next() );	// Object {value: "a", done: false}
+console.log( itSet.next() );	// Object {value: "b", done: false}
+console.log( itSet.next() );	// Object {value: undefined, done: true}
+
+console.log( itMap.next() );	// Object {value: Array[2], done: false}
+console.log( itMap.next() );	// Object {value: undefined, done: true}
+
+
+[具备Iterator接口的数据结构都可以进行如下操作]：
+1---解构赋值
+2---扩展运算符
+3---可以使用for...of循环
+
+
+[实例1]：解构赋值
+const set=new Set(['a','b']);
+let [x,y]=set;
+
+console.log(x);		// a 
+console.log(y);		// b
+
+
+[实例2]：扩展运算符  ...
+---> 把字符串每一项变成数组
+let str='abc';
+let arrStr=[...str];
+console.log(arrStr);	// ["a", "b", "c"]
+
+---> 数组去重
+let arr=[1,1,2,4,3,3,4];
+let arrSot=new Set(arr);
+console.log([...arrSot]);	// [1, 2, 4, 3]
+
+---> 解析函数参数
+function animals(...types){
+    	var arr=Array.prototype.slice.call(arguments)；
+	console.log(arr)；	// ["cat", "dog", "fish"]
+}
+animals('cat', 'dog', 'fish') 	
+
+function animals(...types){
+    console.log(types)
+}
+animals('cat', 'dog', 'fish') 	// ["cat", "dog", "fish"]
+
+
+[实例3]：for...of循环  
+let arr=[1,2,3];
+for(let i of arr){
+	console.log(i)		// 1 2 3
+};
+
+let map=new Map([
+		['a',1],
+		['b',2]
+	]);
+for(let [key,value] of map){
+	console.log(key)		// a b
+	console.log(value)		// 1 2
+}
+
+
+【class语法】：
+概念：JS语言的传统方法是通过构造函数定义并生成新的对象，是一种基于原型的面向对象系统。这种写法跟传统的面向对象语言(c++或java)有很大差异，
+很容易让人感到困惑。所以ES6中新增了类的概念，可以使用class关键字声明一个类，之后以这个类来实例化对象。
+
+[传统写法]：
+function A(a){
+	this.a=a;
+	return this;
+}
+
+A.prototype={
+	constructor:A,
+	fn1:function(){ console.log(this.a) }
+};
+
+var ar=new A('hello word');
+ar.fn1();	
+
+
+[class写法]: 这个种写法和上面的传统写法一样
+class A{
+	constructor(a){		
+		this.a=a;
+	}
+	fn1(){ console.log(this.a) }
+};
+
+var ar=new A('hello word');		// 创建对象实例时，会先默认调用constructor方法
+ar.fn1();
+
+[ES6class写法注意事项]：
+1---constructor方法是构造方法，this关键字代表实例对象
+2---定义类的方法的时候前面不需要加function关键字，方法之间不需要加逗分隔
+3---constructor内定义的方法和属性是实例对象自己的，而constructor外定义的方法和属性则是所有实力对象可以共享的，也就说prototype属性在fn1上继续存在
+4---定义在类中的方法都是不可以被枚举的
+5---类中的constructor方法必须有，如果没有显示的写入，那么会有一个空的constructor方法被默认添加进类中
+6---调用类去声明对象实例的时候，必须要用new的方法去调用,并且类中的constructor方法是默认会被直接调用的
+
+
+【class类的继承】：extends   static   super
+
+[static静态方法]：相当于初始化一些方法
+class A{
+	constructor(){
+		A.fn();
+	}
+	static fn(){
+		console.log('hello static')
+	}
+};
+
+let a=new A();	// 	弹出'hello static'
+
+
+[extends  super方法]：
+1---类之间可以通过extends关键字实现继承，这比ES5的通过修改原型链实现继承，要清晰和方便很多。下面定义了一个B类，该类通过extends关键字，继承了A类的所有属性和方法。
+2---super关键字，它指代父类的实例（即父类的this对象）。子类必须在constructor方法中调用super方法，否则新建实例时会报错。这是因为子类没有自己的this对象，而是继承父类的this对象，然后对其进行加工。如果不调用super方法，子类就得不到this对象。
+3---ES6的继承机制，实质是先创造父类的实例对象this（所以必须先调用super方法），然后再用子类的构造函数修改this。
+
+class A{
+	constructor(a){
+		this.a=a;
+	}
+	fn1(){ console.log(this.a) }
+};
+
+class B extends A{		
+	constructor(a){
+		super();		// 继承A的this对象，因为继承的B类没有this对象
+		this.a=a;
+	}
+	fn2(){
+		console.log(this)	// this指向B类
+		console.log(super.fn1)	// 指向A类中的fn1方法
+	}
+};
+
+var ae=new B('hello word');
+ae.fn1();
+
+
+
+【Symbol数据类型】：基本数据类型
+概念：表示独一无二的值，它是JS的第七种数据类型
+基本数据类型：null undefined Number String Boolean Symbol
+引用类型：Object
+
+[注意事项]：
+1---Symbol函数不能用new去调用，它是一个原始类型的值，不是对象
+2---Symbol函数可以接收一个字符串参数，表示对Symbol的描述，主要是为了在控制台显示，或者转为字符串的时候比较容易区分
+3---它唯独不能进行数字类型(Number)的转换
+4---它不能和任何类型的数据进行运算( + - % 等)
+5---Symbol()不能直接作为对象的属性使用
+6---无法被for in循环到，但可以用Object.getOwnPropertySymbol(obj)找到
+
+
+
+[实例1]：创建实例
+let sym = Symbol();
+console.log(typeof sym);	// symbol
+
+[实例2]：接收字符串参数
+let sym1 = Symbol('1');
+let sym2 = Symbol('2');
+console.log(sym1);				// Symbol('1')
+console.log(sym2);				// Symbol('2')
+console.log(Symbol('1')===Symbol('1'));		// false
+
+[实例3]：可以做为对象的属性使用，但必须加[]符号使用
+let sym = Symbol('sym');
+let obj={
+	[sym]:'hello word'
+};
+console.log(obj[sym])	// "hello word"
+
+[实例4]：Symbol()不能直接作为对象的属性使用
+let obj={
+	[Symbol('123')]:'123'
+};
+console.log(obj[Symbol('123')]);	// undefined	
+
+[实例5]：无法被for in循环到，但可以用Object.getOwnPropertySymbol(obj)找到
+let obj={
+	[Symbol('123')]:'123',
+	[Symbol('456')]:'456'
+};
+console.log( Object.getOwnPropertySymbols(obj) );	// [Symbol(123), Symbol(456)]
+
+
+
+【内置对象扩展】：字符串的扩展  数组的扩展  对象扩展
+
+[字符串的扩展]：模板字符串   ``  
+1---当我们要插入大段的html内容到文档中时，传统的写法非常麻烦，我们要用一堆的'+'号来连接文本与变量，所以之前我们通常会引用一些模板工具库，比如mustache等等。
+2---用反引号（`）来标识起始，用${}来引用变量，而且所有的空格和缩进都会被保留在输出之中。
+3---${数据}去拼接数据，并且可以做运算
+4---新增字符串方法 ：repeat  includes  startsWith  endsWith
+
+实例1：字符串拼接和变量的赋值
+let name='小明';
+let age=20;
+document.getElementById('div').innerHTML=`考核成员 ${name} 他的年龄是 ${age}`;
+
+实例2：做表达式的运算
+let oN=true;
+let str=`<ul>
+		<li class="${oN?'red':'yellow'}">xxx</li>
+	</ul>`;
+	
+实例3：新增字符串方法
+1---repeat字符串复制
+let str='a';
+console.log( str.repeat(3) );	// aaa
+
+2---字符串查找 includes  startsWith  endsWith
+let str='hello';
+console.log( str.includes('e') );	// true
+console.log( str.includes('w') );	// false
+
+let str='hello';
+console.log( str.startsWith('h') );	// true 是否为h开头
+
+let str='hello';
+console.log( str.endsWith('o') );	// true 是否为o结尾
+
+
+[数组的扩展]：
+
+实例1：将类数组转换成数组
+function a(){
+	var arr=Array.from(arguments);
+	console.log( arr );			//["a", "b"]
+	console.log( arr instanceof Array );	// true
+};	
+a('a','b');
+
+实例2：数组方法 find  findIndex  fill
+let arr = [1,2,3,4];
+let arrs = arr.find(function(item){
+	return item>2;
+});
+console.log(arrs);	// 3：找到首先满足条件的具体值
+
+let arr = [1,2,3,4];
+let arrs = arr.findIndex(function(item){
+	return item>2;
+});
+console.log(arrs);	// 2：找到首先满足条件的下标值
+
+let arr = [1,2,3,4];
+arr.fill('a',1,3);	
+console.log(arr);	// [1,'a','a',4]：填充数组为指定的值
+
+
+[对象的扩展]：
+
+实例1：对象的简洁表示法
+let obj = {
+	fn1(){ console.log(1) },
+	fn2(){ console.log(1) }
+};
+obj.fn1();
+
+
+实例2：对象的拼接组合(属性名如果一样的话，会覆盖)
+let obj1={a:1};
+let obj2={b:2};
+let obj3={c:3};
+Object.assign(obj1,obj2,obj3);
+console.log(obj1);		// Object {a: 1, b: 2, c: 3}
+
+
+【函数的扩展】：
+1---为函数参数指定默认值
+2---函数的rest参数  ...参数
+3---箭头函数  =>
+
+实例1：传统指定参数默认值带来的问题
+function fn(a,b){
+	a= a||10;
+	b= b||20;
+	console.log(a+b)
+}
+fn(0,10);	// 20 不是我们想要的10
+
+function fn(a=10,b=20){
+	console.log(a+b)
+}
+fn(0,10);	// ES6改写之后就对了
+
+
+实例2：函数的rest参数
+function fn(...arr){
+	console.log(arr);			// [1, 2, 3]
+	console.log(arr instanceof Array);	// true 和 Array.from(类数组)是一样的
+}
+fn(1,2,3);
+
+
+实例3：箭头函数  =>  (主要看第6点)
+1. 具有一个参数的简单函数
+var single = a => a
+single('hello, world') 		// 'hello, world'
+
+2.多个参数需要用到小括号，参数间逗号间隔，例如两个数字相加
+var add = (a, b) => a + b
+add(3, 8) // 11
+
+3. 函数体多条语句需要用到大括号
+var add = (a, b) => {
+    if (typeof a == 'number' && typeof b == 'number') {
+        return a + b
+    } else {
+        return 0
+    }
+}
+
+4. 返回对象时需要用小括号包起来，因为大括号被占用解释为代码块了
+var getHash = arr => {
+    // ...
+    return ({
+        name: 'Jack',
+        age: 33
+    })
+}
+
+5.箭头函数不能用new,否则会报错
+
+6.修正this指向   
+1---当我们使用箭头函数时，函数体内的this对象，就是定义时所在的对象，而不是使用时所在的对象。
+2---并不是因为箭头函数内部有绑定this的机制，实际原因是箭头函数根本没有自己的this，它的this是继承外面的，因此内部的this就是外层代码块的this。
+3---在箭头函数内部不能使用 call apply bind去修正this指向(因为它内部的函数没有this对象)
+4---在箭头函数内部也没有arguments对象，它的argments对象其实是上一次父级函数的argments
+
+[实例1]：
+window.name='window';
+var sum={
+	name:'sum',
+	fn:function(){
+		setTimeout(function(){
+			console.log(this.name)
+		},100);
+	}
+};
+sum.fn();		// window
+
+window.name='window';
+var sum={
+	name:'sum',
+	fn:function(){
+		setTimeout( ev => {
+			console.log(this.name)
+		},100);
+	}
+};
+sum.fn();		// sum
+
+
+【promise异步编程】：
+概念：在ES6中新增了异步编程的解决方案，体现在代码中是一个对象，可以通过Promise构造函数实例化它
+三种状态：Pending(进行中)   Resolved(已完成)   Rejected(已失败)
+两个原型方法：Promise.prototype.then()  Promise.prototype.catch()
+两个静态方法：Promise.all()  Promise.resolve()
+
+
+
+
+
+
+-----------------------------------------------------------------【总结】---------------------------------------------------------------
+
+--------------------------------------------新增声明变量的两种方式--------------------------------------------
+[let]:
+	1 不会提升解析
+	2 代码块内有效
+	3 同一作用域中不能重复声明同一变量
+
+[const]:
+	1 不会提升解析
+	2 代码块内有效
+	3 同一作用域中不能重复声明同一变量
+	4 声明必须赋值
+	5 声明基本类型，所赋的值不能改变；声明引用类型，引用指针不能改变
+
+
+-----------------------------------------------解构赋值------------------------------------------------------
+介绍：它是一种匹配模式，只要等号两边的模式相同，那么左边的变量就可以被赋予右边的值
+[数组的解构赋值]：
+1 按顺序左右匹配
+let [a, b] = [10, 'str'];
+console.log(a);		// 10
+console.log(b);		// 'str'
+
+2 可以指定默认值
+let [x = 1] = [];
+console.log(x);		// 1
+
+[对象的解构赋值]：
+1 按key值匹配
+let {a, b} = {b: '123', a: '456'};
+console.log(a);		// 456
+console.log(b);		// 123
+
+[基本类型的解构赋值]：
+1 字符串
+let [a, b, c] = '字符串';
+console.log(a, b, c);		// 字 符 串
+
+2 null 和 undefined 不能够解构赋值
+let [a] = null;		// 报错
+let [b] = undefined;		// 报错
+
+
+----------------------------------新增两种数据结构 Set Map--------------------------------------------------
+[Set]：它类似于数组，但成员的值都是唯一的，没有重复的项，重复添加的项将被忽略
+1---创建Set
+let s = new Set([1, 2, 3]);
+console.log(s);		// Set(3) {1, 2, 3}
+
+2---Set 类的属性
+let s = new Set([1, 2, 3]);
+console.log(s.size);		// 3：Set数据的数据个数
+
+3---Set 类的方法
+set.add(value)		// 添加一个数据(可以链式添加)，返回Set结构本身
+set.delete(value)		// 删除指定数据，返回一个布尔值，表示删除是否成功
+set.has(value)		// 判断指定数据是否是Set的成员，返回一个布尔值
+set.clear(value)		// 清除所有数据，没有返回值 Set(0) {}
+set.keys()			// Set数据的遍历器：返回键名
+set.values()		// Set数据的遍历器：返回键值
+set.entries()		// Set数据的遍历器：返回键值对
+set.forEach(callBack)		// Set数据的遍历器：使用回调函数遍历每个成员，接受3个参数value, key, set
+
+[Set实例]：数组去重	
+let arr = [1,2,2,3,4,1,4];
+let jop = [];
+let s = new Set(arr);
+s.forEach((value, key, set)=>{
+	jop.push(value)
+})
+console.log(jop);		//  [1, 2, 3, 4]
+
+
+[Map]：它类似于对象，也是键值对的集合，但是"键"的范围不在局限于字符串，它可以包括任何类型的值。
+也就是说Object结构采用[字符串:值]的对应形式，而Map结构采用[值：值]的对应，是一种更完善的结构实现，如果你需要的是“键值对”的数据结构时，Map比Object更合适。
+
+[举例]：因为Objcet的键值只保存字符串，所以添加的两个键值data1和data2会进行toString转换   
+let data1 = {name:'小明'};
+let data2 = {age:20};
+let obj = {};
+obj[data1] = '第一个数据';
+obj[data2] = '第二个数据';
+console.log(obj);		// Object {[object Object]: "第二个数据"}
+
+1---创建Map
+let m = new Map([ ['a', 1], ['b', 2] ]);
+console.log(m);		// Map(2) {"a" => 1, "b" => 2}
+
+2---Map 类的属性
+console.log(m.size);		// 2：Map数据的数据个数
+
+3---Map 类的方法
+map.set(key, value)		//设置键值对，返回整个Map结构，如果key值存在，则key值将被更新；否则可以将被添加进Map
+map.get(key)		//读取Map中key对应的值，找不到返回undefined
+map.delete(key)		//删除某个键值对，删除成功返回true
+map.has(key)		//查找某个键，查找成功返回true
+map.clear()		//清除所有数据，没有返回值 Map(0) {}
+map.keys()		//Map数据的遍历器：返回键名
+map.values()		//Map数据的遍历器：返回键值
+map.entries()		//Map数据的遍历器：返回键值对
+map.forEach(callBack)	//Map数据的遍历器：使用回调函数遍历每个成员，接受3个参数value, key, set
+
+4---Map 注意事项：NaN如果作为Map的键值的话，它会认为是同名的
+
+
+
+--------------------------------Iterator和for...of循环---------------------------------------------
+[基本概念]：js中有四种数据集合（数组、对象、Set、Map），这样就需要一种统一的接口机制去处理所有不同的数据结构。
+Iterator就是这样一种机制，它是一个接口，为各种不同的数据结构提供统一的访问机制，任何数据结构只要部署Iterator接口，就可以完成遍历操作。
+
+[Iterator遍历器的作用]：
+1---为各种数据结构提供统一的、简便的访问接口
+2---使各种数据结构的成员能够按某种次序排列
+3---ES6新增了遍历命令for...of循环，Iterator主要供它消费
+
+[具备Iterator接口的数据可以进行如下操作]：
+1---解构赋值
+2---扩展运算符(...)
+3---可以使用for...of循环
+
+实例1：
+let str = 'str';
+let arrStr = [...str];
+console.log(arrStr);		//["s", "t", "r"]
+
+实例2：数组去重
+let arr = [1,2,4,3,3,4,5,8,5];
+let arrSet = new Set(arr);
+let newArr = [...arrSet];
+console.log(newArr);		//[1, 2, 4, 3, 5, 8]
+
+实例3：for...of循环
+let arr = [1,2,3];
+for (let i of arr) {
+	console.log(i)
+}
+
+let arrSet = new Set([1,2,3]);
+for (let i of arrSet) {
+	console.log(i)
+}
+
+let arrMap = new Map([ ['a', 1], ['b', 2] ]);
+for (let [key, value] of arrMap) {
+	console.log(key, value)
+}
+
+
+-----------------------------------------------class类------------------------------------------------------
+[基本概念]：JS语言的传统方法是通过构造函数，定义并生成新对象，是一种基于原型的面向对象系统。
+而ES6新增了类的概率，可以使用class关键字声明一个类，之后以这个类去实例化对象。
+
+[传统面向对象写法]：
+function Person (name, age) {	
+	this.name = name;
+	this.age = age;
+}
+Person.prototype = {
+	constructor : Person,
+	sayName : function () {
+		console.log(this.name)
+	}
+}
+var person = new Person('xiaoming', 20);
+person.sayName()
+
+[ES6类的写法]：
+class Person {
+	constructor (name, age) {
+		this.name = name;
+		this.age = age;
+	}
+	sayName () {
+		console.log(this.name)
+	}
+}
+let person = new Person('xiaoming', 20);
+person.sayName()
+
+[ES6的类和ES5中的构造函数对比]：
+1---ES5中的Person构造函数对应ES6中的Person类的构造方法
+2---ES6中的sayName等所有函数方法前面不需要加function关键字，并且方法之间没有逗号分隔
+3---构造函数的prototype属性在ES6类的所有方法中都继续存在
+4---定义在类中的方法都是不可以枚举的
+5---ES6中的默认方法是constructor方法，通过new命令生成对象实例时，改方法自动调用，如果在类中没有显示定义，那么改方法会默认为空constructor () {｝
+6---ES6中的类构造函数，必须调用new去实例化对象
+
+
+[class类的继承]：extends  super
+1---Class 之间可以通过extends关键字实现继承，通过super方法用来新建父类的this对象。
+子类必须在constructor方法中调用super方法， 否则新建实例时会报错。 这是因为子类没有自己的this对象， 而是继承父类的this对象，
+ 然后对其进行加工。 
+
+class Person {
+	constructor (name, age) {
+		this.name = name;
+		this.age = age;
+	}
+	sayName1 () {
+		console.log(this.name)
+	}
+}
+
+class PersonExtends extends Person{
+	constructor (name, age) {
+		super(name, age)		            // 继承Person类的所有属性和方法，必须在子类的constructor中调用
+	}
+	sayName2 () {	
+		console.log('我是'+super.sayName1);     // super.sayName1继承了Person类的sayName1方法	
+	}
+}
+let personExtends = new PersonExtends('xiaohong', 24);
+personExtends.sayName1()	// xiaohong
+personExtends.sayName2()	// 我是xiaohong
+
+
+
+-----------------------------------------------symbol数据类型-------------------------------------------------------------
+[基本概念]：它表示一种独一无二的值，是JS的第七种“基本数据类型”
+
+[创建Symbol]：
+let s1 = Symbol('s1');
+let s2 = Symbol('s2');
+
+[symbol的特点]：
+1---它用typeof检测得到symbol
+2---它是一个原始类型的值，不能使用new去调用
+3---它们绝不重复
+4---Symbol函数接受一个字符串参数，仅仅表示对Symbol的描述，在控制台好区分而已
+5---Symbol不能转换成数字类型，所以也不能用任何运算符做运算
+6---Symbol作为对象的属性不能被for...in循环到
+
+[作为对象的属性使用1]：
+let s1 =Symbol('s1');
+let obj = {};
+obj[s1] = 'YYY';
+console.log(obj);		// {Symbol(s1): "YYY"}
+
+[作为对象的属性使用2]：
+let s1 =Symbol('s1');
+let obj = {
+	[s1] : 'YYY'
+};
+console.log(obj[s1]);		// 'YYY'
+
+
+---------------------------------------内置对象的扩展----------------------------------------------------
+[字符串的扩展]：
+1---模版字符串
+let cont = '文字内容';
+let htmls = `<div>
+		<p>${cont}</p>
+	</div>`
+
+2---字符串循环累加
+let str1 = 'a';
+let str2 = str1.repeat(3);	// aaa
+
+3---字符串查找
+let str = 'str';
+console.log(str.includes('t'))	// 查找字符串中是否包含某个字符：true
+console.log(str.startsWith('s'))	// 查找字符串中开头是否包含某个字符：true
+console.log(str.endsWith('r'))	// 查找字符串中结尾是否包含某个字符true
+
+
+[数组的扩展]：
+1---把一个类数组转换成真正的数组：Array.from（arr）
+function arrs (a, b, c) {
+	let arrsForm = Array.from(arguments);
+	console.log( arrsForm.constructor );	// Array
+}
+arrs(1,2,3)
+
+2---查找符合条件的数组，找到后立即返回，不会继续查找其他符合条件的值。
+let arr = [1,2,3,4];
+let res1 = arr.find(function(a){		// 查找符合的值，没有找到返回undefined
+	return a < 3;
+});
+let res2 = arr.findIndex(function(a){	// 查找符合的值的下标，没有找到返回-1
+	return a < 3;
+});
+console.log(res1);	// 1
+console.log(res2)	// 0
+
+3---Array.fill()  填充数组，有点像数组的splice方法
+let arr = [1,2,3,4];
+arr.fill('a', 1 ,3)
+console.log(arr);	// [1, "a", "a", 4]
+
+
+[对象的扩展]：
+1---对象的简写：
+	对象的key和value如何一样的话，可以简写
+	对象里面的函数方法可以省略function关键字
+
+2---判断数据是否一样：Object.is(obj1, obj2)
+	基本类型判断值，引用类型判断引用和值
+	NaN在这里是一样的，得到true
+
+3---合并对象：Object.assign(obj1, obj2, ...)
+	合并中相同的属性会被覆盖
+let obj1 = {a:1};
+let obj2 = {a:2, b:3};
+console.log( Object.assign(obj1, obj2) );	// {a: 2, b: 3}
+
+
+
+[函数的扩展]：
+1---为函数的参数指定默认值
+function person (num1=10, num2=10) {
+	console.log(num1 + num2);	// 30
+}
+person(20)
+
+2---函数的 rest 参数：...arr 这样可以避免使用arguments去获取参数列表
+function person (...arr) {
+	console.log(arr)	// [1, 2, 3]
+}
+person(1,2,3)
+
+3---箭头函数
+	箭头函数没有自己的this对象，this对象继承自所在的环境对象的
+	箭头函数没有自己的arguments对象，arguments对象继承自所在的环境对象的arguments对象
+function person () {
+	setTimeout(function () {
+		console.log(this)		// window
+	})
+	setTimeout(()=>{
+		console.log(this)		// obj
+	}, 1000)
+}
+let obj = {};
+person.call(obj)
+
+
+
+---------------------------------------模块化开发----------------------------------------------------
+【需要借助插件完成】：目前浏览器还不支持
+
+【@】文件夹内容 index.js为主文件，同级modules文件夹里面有a.js文件,b.js文件
+[a.js---内容如下]：
+// 默认导出, 导出的 东西 可以没有名字 但只能使用一次
+export default function () {
+	console.log('a 这个东西');
+}
+
+// 自定义导出 导出的 东西 必须有名字 可以多次使用
+export let objA = {
+	name: 'A'
+}
+
+[b.js---内容如下]：
+// 默认导出, 导出的 东西 可以没有名字 但只能使用一次
+export default function () {
+    console.log('b 这个东西');
+}
+
+// 自定义导出 导出的 东西 必须有名字 也可以多次使用
+export let objB = {
+	name: 'B'
+}
+
+[index.js---内容如下]：
+// 接收模块 "默认导出" 的变量，接收的变量名可以自己定义
+import fn1 from './modules/a.js'
+import fn2 from './modules/b.js'
+
+// 接收模块 "自定义导出" 的变量，接收的变量名要和模块导出的变量名一致
+import {objA} from './modules/a.js'
+import {objB} from './modules/b.js'
+
+// 统一接收 "默认导出" & "自定义导出"
+import fn1, {objA} from './modules/a.js'
+import fn2, {objB} from './modules/b.js'
+
+fn1()			// a 这个东西
+fn2()			// b 这个东西
+console.log(objA)	// A
+console.log(objB)	// B
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,366 @@
+【官网地址】：http://webpackdoc.com/
+【视频地址】：慕课网webpack教程
+
+【@】安装node.js 或者安装 Git（文件夹里面有Git安装包）
+在安装完Git后，鼠标右键可以看到 ‘Git GUI Here’和‘Git Bash Here’两选项，选择Bash即可打开npm窗口
+
+【@】创建项目的两种形式
+（1）自己手动创建
+
+（2）利用Git窗口去创建：
+	1--在需要创建项目的地方右键运行：Git Baseh Here
+	2--在Git窗口里面输入：mkdir 文件名
+	3--进入到创建的目录里面：cd 文件名
+	4--之后你就可以在编辑器里面去做你想做的事了，可以自己手动创建目录里面的其他js或css文件等
+
+【@】创建package.json文件
+1--在Git窗口里面输入：npm init （如果没有其他要特别标注的地方，可以直接按回车键，设置默认的信息）
+2--安装完成后运行：npm run webpack
+
+【@】安装 webpack 依赖（会自动生成node_modules文件）
+在Git窗口里面输入：npm install webpack --save-dev
+
+【@】配置package.json文件
+"scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "webpack": "webpack --config webpack.config.js --progress --display-modules --colors --watch"
+  },
+（提示：这是配置常用的webpack功能，比如：打包进度条 打包颜色显示 实时监听等都可以在这里先配置好，然后运行webpack即可）
+（如果你不小心关闭了Git窗口，除了运行webpack命令以为，要想启用package.json文件，记得运行：npm run webpack）
+
+
+【@】webpack.config.js的配置----> entry配置
+
+1---单个打包到指定js文件里面
+module.exports = {
+  entry:'./src/script/main.js',
+  output: {
+    path: __dirname+'/dist/js/',
+    filename: '指定js文件名.js'	// 运行webpack后会再dist/js的文件夹下自动生成一个打包的js文件，页面上引入这个js文件即可
+  }
+}
+
+2---多个打包到指定js文件里面
+module.exports = {
+  entry: ['./src/script/main.js','./src/script/a.js'],
+  output: {
+    path: __dirname+'/dist/js/',
+    filename: '指定js文件名.js'	// 不同页面的js都使用一个打包js
+  }
+}
+
+3---多个打包到不同的配置js文件里面（通过name+hash（或者chunkhash）值的形式，生成唯一的js对应文件）
+module.exports = {
+  entry: {
+  	main: './src/script/main.js',
+  	a: './src/script/a.js'
+  },
+  output: {
+    path: __dirname+'/dist/js/',
+    filename: '[name]-[hash].js'	
+  }
+}
+（如果是chunkhash 那么每次打包生成的打包js文件ID号都会不一样：仅限于修改后的js文件，没有修改的js文件不会打包新的文件出来，这样在大型项目中，可以很方便的返回之前的版本）
+
+【@】上面提到打包到指定js文件，这个js文件可以自己手动命名，也可以由webpack自动命名（webpack.config.js里面去配置）
+module.exports = {
+  entry: ['./src/script/main.js','./src/script/a.js'],
+  output: {
+    path: __dirname+'/dist/js/',
+    filename: '[name]-[hash].js'		
+  }
+}
+（但是由于每次改动js文件，这个webpack就会自动打包一个新的js文件，所以我们不可能每次都去更改页面上的js引用地址去解决，看下面的处理方式：自动生成js打包地址）
+ ( 如果不想每次更改都自动生成新的文件，可以把hash值去掉，那么它就会去执行覆盖模式 )
+
+【@】插件 html-webpack-plugin
+1--安装插件：npm install html-webpack-plugin --save-dev
+2--配置插件：在 webpack.confgin.js里面配置插件：  var htmlWebpackPlugin = require('html-webpack-plugin');
+3--引用插件：plugins: [ new htmlWebpackPlugin() ]
+4--绑定你的html文件
+
+[实例]：
+var htmlWebpackPlugin = require('html-webpack-plugin');
+module.exports = {
+  entry: ['./src/script/main.js','./src/script/a.js'],
+  output: {
+    path: __dirname+'/dist/js/',			// 新生成的html文件也会在这个地址文件里面
+    filename: '[name]-[hash].js'
+  },
+  plugins: [
+  	new htmlWebpackPlugin({
+  		template:'index.html'	// 你的页面地址
+  	})
+  ]
+}
+（提示1：每次修改main或者a.js文件的时候，在新生成的html文件里面的srcipt的src里面，都会自动配置js路径）
+（提示2：在你原来的html文件里面就不需要再引入js文件了，因为你在你的html文件里面的js文件全部动态绑定到自动生成的html页面里面了，而且在你自己的html文件里面做的所有修改都会反应到生成的html页面里面）
+
+
+【@】接着上面的来，因为在path配置的时候，你都是把自动生成的文件，不管是js还是后来的html文件，都放在了dist文件下的js文件夹下，这不和规矩，往下看
+var htmlWebpackPlugin = require('html-webpack-plugin');
+
+module.exports = {
+  entry: ['./src/script/main.js','./src/script/a.js'],
+  output: {
+    path: __dirname+'/dist/',
+    filename: 'js/[name]-[hash].js'		// 让自动打包的js文件生成在dist里面的js文件夹下（这样自动绑定的html文件就回从js文件里面分离出来，放在dist文件里面）
+  },
+  plugins: [
+  	new htmlWebpackPlugin({
+  		template:'index.html'	// 你的页面地址
+  	})
+  ]
+}
+
+
+【@】
+var htmlWebpackPlugin = require('html-webpack-plugin');
+
+module.exports = {
+  entry: ['./src/script/main.js','./src/script/a.js'],
+  output: {
+    path: __dirname+'/dist/',
+    filename: 'js/[name]-[hash].js'
+  },
+  plugins: [
+  	new htmlWebpackPlugin({
+  		filename:'index-[hash].html',	// 自动带hash值的html页面（每次改动都会生成一个html文件，当然也可以直接用 index.html只生成一个html文件）
+  		inject:'head',		// 让自动html页面里面的script标签插入到页面的head部分，默认是body最下面插入
+  		template:'index.html'	// 你的页面地址
+  	})
+  ]
+}
+
+
+【@】讨论下plugins里面的参数（具体可以看慕课网的视频介绍3-2节）
+plugins: [
+  	new htmlWebpackPlugin({
+  		filename:'index-[hash].html',	// 自动带hash值的html页面（每次改动都会生成一个html文件，当然也可以直接用 index.html只生成一个html文件）
+  		inject:'head',			// 让自动html页面里面的script标签插入到页面的head部分，默认是body最下面插入
+  		template:'index.html',		// 你的页面地址
+  		title:'我在plugins配置里面传入的参数'	// 你向所有打包的html页面里面传入的参数：通过 htmlWebpackPlugin.options.title （配合ejs）
+  	})
+  ]
+
+那么在你自己的html页面里面可以这样写：<P><%= htmlWebpackPlugin.options.title %></P>
+
+
+【@】关于线上地址的问题
+因为我们自己做项目的时候都是在本地的webpack里面测试的，但一旦到线上html页面里面引人的js或css地址肯定是不对的，解决方法看下面
+output: {
+    path: __dirname+'/dist/',
+    publicPath:'http://xxxxxx',		// 设置这个属性就可以在你引人的打包js或其他文件里面的前面都带上绝对路径，方便正式上线使用
+    filename: 'js/[name]-[hash].js'
+  },
+
+
+【@】压缩代码（里面还有一些其他的属性可以选择）
+plugins: [
+  	new htmlWebpackPlugin({
+  		filename:'index-[hash].html',		// 自动带hash值的html页面（每次改动都会生成一个html文件，当然也可以直接用 index.html只生成一个html文件）
+  		inject:'head',			// 让自动html页面里面的script标签插入到页面的head部分，默认是body最下面插入
+  		template:'index.html',		// 你的页面地址
+  		title:'我在plugins配置里面传入的参数',	// 你向所有打包的html页面里面传入的参数：通过 htmlWebpackPlugin.options.title （配合ejs）
+  		minify:{				// 压缩代码的形式
+  			removeComments:true, 				// 删除注释
+  			collapseWhitespace:true				// 删除空格
+  		}
+  	})
+  ]
+
+
+【@】webpack的多页面处理功能
+假设你的项目里面有两个页面：index1、index2
+和3个js文件：a、b、gx
+你要的效果是index1页面引入a和gx文件；你要的目的是index2页面引入b和gx文件；
+
+[配置]webpack.config.js文件里面的 chunks 属性即可
+
+var htmlWebpackPlugin = require('html-webpack-plugin');
+
+module.exports = {
+  entry: {
+  	a:'./src/script/a.js',
+  	b:'./src/script/b.js',
+  	gx:'./src/script/gx.js'
+  },
+  output: {
+    path: __dirname+'/dist/',
+    publicPath:'http://cdn.com/',
+    filename: 'js/[name]-[hash].js'
+  },
+  plugins: [
+  	new htmlWebpackPlugin({
+  		filename:'index1.html',
+  		inject:'head',
+  		template:'index1.html',
+  		title:'index1页面',
+  		chunks:['gx','a']
+		//excludeChunks:['b']  --> 意思是排除掉绑定的b文件，其他都要
+  	}),
+  	new htmlWebpackPlugin({
+  		filename:'index2.html',
+  		inject:'head',
+  		template:'index2.html',
+  		title:'index2页面',
+  		chunks:['gx','b']
+		//excludeChunks:['a']   --> 意思是排除掉绑定的a文件，其他都要
+  	})
+  ]
+}
+
+
+
+/*----------------------------------------------------------------------------------------提高脚本js的运行----------------------------------------------------------------------------------------------------------------------------*/
+
+【@】以上都是关于脚本js的运用，但由于打包页面的js文件都是通过script标签引入的，所以页面有多个js文件要加载的时候，效率不是很高，如何提高脚本js的运行效率，往下看
+慕课网3-3视频
+
+/*------------------------------------------------------------------------------------------------end---------------------------------------------------------------------------------------------------------------------------------*/
+
+
+/*---------------------------------------------------------------------------------------------处理ES6-------------------------------------------------------------------------------------------------------------------------------*/
+
+【@】第四章
+
+/*------------------------------------------------------------------------------------------------end---------------------------------------------------------------------------------------------------------------------------------*/
+
+/*---------------------------------------------------------------------------------------处理css、less、sass--------------------------------------------------------------------------------------------------------------------------*/
+
+【@】在webpack.config.js文件里面添加处理css（可以结合考拉软件去用less绑定css，这也是原始方法）
+1---第一步：
+module: {
+    loaders: [
+      {test: /\.css$/, loader: 'style-loader!css-loader'}		// 处理css
+    ]
+  },
+
+第二步：在你自己的js文件里面引人css模块
+require('../css/indexPC.css');
+
+第三步：运行webpack
+
+
+
+【@】postcss-loader插件：css3自定补全前缀
+第一步：安装postcss工具    		    npm install postcss-loader --save-dev
+第二步：安装postcss里面的autoprefixer插件    npm install autoprefixer --save-dev
+第三步：在webpack.config.js里面的module ->loaders里面去加人postcss   ( 发现目前版本的webpack对这个东西配置变了，自己百度解决 )
+
+
+
+【@】在webpack.config.js文件里面添加处理less（你的项目里面可以不用建立css文件夹，webpack会通过less直接生成css然后打包到你的页面style标签里面）
+第一步：安装less插件  npm install less --save-dev
+第二步：引入less        npm install less-loader --save-dev
+第三步：配置webpack.config.js    
+module: {
+    loaders: [
+      {test: /\.css$/, loader: 'style-loader!css-loader'},			// 引入css
+      {test: /\.less$/, loader: 'style-loader!css-loader!less-loader'}		// 引入less-loader
+    ]
+  },
+第四步：js中引入less文件   require('../less/indexPC.less');
+第五步：运行webpack
+
+【@】sass的安装和使用和less是一样的
+
+/*------------------------------------------------------------------------------------------------end---------------------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------处理模板文件---------------------------------------------------------------------------------------------------------------------------*/
+
+/*------------------------------------------------------------------------------------------------end---------------------------------------------------------------------------------------------------------------------------------*/
+
+
+/*-------------------------------------------------------------------------------------------处理打包的图片--------------------------------------------------------------------------------------------------------------------------*/
+
+【@】不管你在页面上引用图片还是在css、less里面引入图片地址，打包的过程都会出错，wepack在对图片打包是会生成唯一的一个路径，而且会重新保存在打包更目录下面，解决方案看下面（分三种情况，并且图片路径都是相对路径）
+
+[第一种情况]：在css或less中使用图片路径
+第一步安装图片loader：npm install file-loader --save-dev
+第二步：配置webpack.config.js       
+module: {
+    loaders: [
+      {test: /\.css$/, loader: 'style-loader!css-loader'},			// 引入css
+      {test: /\.less$/, loader: 'style-loader!css-loader!less-loader'}，	// 引入less-loader
+      {test: /\.(png|jpg|gif|svg)$/i, loader: 'file-loader'}			// 配置图片loader
+    ]
+  },
+第三步：运行webpack
+
+[第二种情况]：在你的html页面里面使用图片路径
+1--- <img src="../images/YQH-imgBj-logo.png">  替换成这种写法  <img src="${require('../images/YQH-imgBj-logo.png')}">     	// 当然这不符合目前公司的项目需求
+
+2---改变webpack对图片的输出路径，让他符合目前公司需求
+module: {
+    loaders: [
+      {test: /\.css$/, loader: 'style-loader!css-loader'},
+      {test: /\.less$/, loader: 'style-loader!css-loader!less-loader'},
+      {
+        test:/\.(png|jpg|gif|svg)$/i,
+        loader:'file-loader',
+        query:{                         			
+          name:'./distImg/[name].[ext]'		// 改变输出img的名字和路径（它会创建在打包文件的目录里面）
+        }
+      }
+    ]
+  },
+
+在css里面就可以这样使用：	就是你真实存放图片的地址
+在你的html里面可以这样使用：	<img src="./distImg/YQH-imgBj-logo.png">  因为你始终查看的都是你打包后的html页面，所以只要这个地址和你的自动生成的打包图片地址一样即可
+
+
+
+
+
+/*------------------------------------------------------------------------------------------------end---------------------------------------------------------------------------------------------------------------------------------*/
+
+
+/*----------------------------------------------------------------------------------------------------webpack安装------------------------------------------------------------------------------------------------------------------*/
+
+【@】项目用到的安装
+1--- 安装 webpack 依赖：
+npm install webpack --save-dev
+
+2---安装 loader：
+npm install css-loader style-loader
+
+3---安装插件 html-webpack-plugin：
+npm install html-webpack-plugin --save-dev
+
+4---安装less插件：
+1: 安装less：     npm install less --save-dev
+2: 引入less        npm install less-loader --save-dev
+
+5---安装图片路径插件：
+npm install file-loader --save-dev
+
+6---运行webpack：
+npm run webpack  ||  webpack
+
+/*---------------------------------------------------------------------------------------------------------end-----------------------------------------------------------------------------------------------------------------------*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
