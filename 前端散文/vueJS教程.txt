@@ -1,0 +1,3767 @@
+/*-----------------------------------------vueJs基础部分--------------------------------------------------------------*/
+
+【Vue是什么？它里面有什么？】：
+1---构建用户界面的渐进式框架(以下功能可以单独使用，不会强制绑定必须使用哪些功能才能去使用另外一些功能)：
+	·声明式渲染：你不需要知道它是怎么渲染数据的，你只要按照它的规则来就可以，至于怎么渲染是它内部实现的
+	·组件系统：界面组件化开发
+	·客户端路由：移动端单页应用
+	·大规模状态管理：组件比较多时，解决共享数据问题
+	·构建工具：模块化打包代码
+
+2---vue中的两个核心点：
+	[响应的数据绑定]
+	·当数据发生变化，视图层会自动更新
+	·利用Object.defineProperty中的setter和getter去监控数据比angularJS的脏检查机制更好点
+	[组合的视图组件]
+	·UI界面映射为组件树
+	·划分组件可维护、可重用、可测试
+
+3---虚拟DOM ：利用render函数渲染成真实的DOM树(模板 里面会介绍到render函数)
+运行js的速度是很快的，但大量的操作DOM节点却会很慢，时常在更新数据后会重新渲染页面导致没有发生变化的DOM节点也会重新渲染。
+而vue在内存中生成了与真实DOM与之对应的数据结构，这个在内存中生成的结构称之为虚拟DOM。当数据发生变化时，能够智能的计算出重新渲染组件的最小代价并应用到DOM操作上。
+
+4---vueJS是提供这些内容
+	·数据渲染/数据同步
+	·组件化/模块化
+	·其他功能：路由、ajax、数据流
+
+[实例]：使用Object.defineProperty去实现双向数据绑定
+<body>
+	<input type="text" id="username">
+	<p id="p"></p>
+
+	<script>
+		var obj = {};
+		Object.defineProperty(obj, 'username', {
+			get: function(val){
+				console.log('get init')
+			},
+			set: function(val){
+				document.getElementById('p').innerText = val;
+				document.getElementById('username').value = val;
+			}
+		});
+
+		document.getElementById('username').addEventListener('keyup', function(event){
+			obj.username = event.target.value;
+		}, false)
+	</script>
+</body>
+
+
+【传统前端路由的优点&缺点】：
+优点：用户体验很好，不需要每次都从服务器端全部获取，快速展现给用户
+缺点：不利于SEO搜索引擎；使用浏览器的前进和后退都会重新发送请求，没有合理的利用缓存；单页面无法记住之前滚动的位置，无法在前进和后退的时候记住滚动的位置
+
+【Vue与React的对比】：
+Vue 				React
+1---模版和渲染函数的弹性选择		1---更加适用于构建大型的应用，和更好的测试性	
+2---简单的语法及项目构建		2---同时适用于web端和原生的App应用
+3---更快的渲染速度和体积 		3---更大的生态圈带来更多的支持和辅助工具
+
+
+/*------------------------------------------------------------------正式开始学习Vue-----------------------------------------------------------------------------*/
+
+
+/*------------------------------------------------------Vue实例的创建------------------------------------------------------------------*/
+
+【实例对象】：new Vue({数据})
+new Vue({
+	el:'#dome',			// 元素选择器
+	data:{ message:'hello word' },		// 数据
+	methods:{				// 事件处理函数
+		callBack(){			// 这是ES6写法，也可以写原生的
+			alert('点击触发')
+		}
+	}
+});
+
+<div id="dome" v-on:click="callBack">{{ message }}</div>
+
+【获取vue实例对象里面的data数据】：vue实例.数据名称
+var vm=new Vue({
+	el:'#dome',			// 元素选择器
+	data:{ message:'hello word' },		// 数据
+	methods:{				// 事件处理函数
+		callBack(){			// 这是ES6写法，也可以写原生的
+			alert('点击触发')
+		}
+	}
+});
+	
+console.log( vm.message )			// 'hello word'
+
+
+【methods里面秘密1】：this  ev  ev.target
+1---this：指向new Vue里面的data数据对象，而this.indexOf(具体数据) 可以得到数组数据中的下标值
+2---ev：事件对象
+3---ev.target：选中元素
+
+【methods里面秘密2】：手动传参
+new Vue({
+	el:'#dome',				
+	data:{ message:'hello word' },		
+	methods:{				
+		callBack(data,ev){			
+			console.log(data);	// 数据
+			console.log(ev);	// event对象
+		}
+	}
+});
+
+<div id="dome" v-on:click="callBack('数据',$event)">{{ message }}</div>
+
+
+/*------------------------------------------------------end实例------------------------------------------------------------------*/
+
+【vue的生命周期】：https://segmentfault.com/a/1190000008771768?_ea=1739750
+
+beforeCreate : 	可以在这加个loading事件，在加载实例时触发 
+created : 	初始化完成时的事件写在这里，如在这结束loading事件，异步请求也适宜在这里调用
+mounted : 	挂载元素，获取DOM节点
+updated : 	如果对数据统一处理，在这里写上相应函数
+beforeDestroy : 可以做一个确认停止事件的确认框
+nextTick : 	更新数据后立即操作dom(DOM已经更新完成)
+
+
+/*------------------------------------------------------指令------------------------------------------------------------------*/
+
+【Vue指令系统】：v-
+
+1---事件绑定指令: v-on  可以简写成 @:
+<div id="dome" v-on:click="callBack"></div>
+<div id="dome" @:click="callBack"></div>
+(提示：callBack函数在new Vue的methods属性里面统一管理)
+
+<div id="dome" v-on:click="function(){alert(1)}"></div>
+(提示：也可以直接写执行函数)
+
+
+2---属性绑定指令：v-bind  可以简写成 :
+<div id="dome" v-bind:title="data里面的数据"></div>
+<div id="dome" v-bind:class="{red:true}"></div>
+<div id="dome" v-bind:coust="data里面的数据"></div>	// 绑定自定义属性
+<div id="dome" :title="data里面的数据"></div>		// 简写形式 :
+<div id="dome" :class="{red:true}"></div>		// 简写形式 :
+
+3---html标签数据解析指令：v-html
+new Vue({
+	el:'#dome',
+	data:{
+		html:'<p>hello word</p>'		// 数据里面有html标签
+	}
+})
+<div id="dome" v-html="html"></div>
+
+4---循环渲染指令：v-for 
+var list=[		// 数据
+	{name:'小明'},
+	{name:'小红'}
+];
+new Vue({
+	el:'#dome',
+	data:{
+		list:list
+	}
+});
+
+<ul id="dome">
+	<li v-for="itme of list">{{item.name}}</li>
+</ul>
+
+·值得注意的是 使用v-for循环渲染得到的数据 item 如果是数组的话，那么在item上面使用原生的一些数组方法的时候，其实vue已经对这些方法做了重构，是可以响应式的触发的
+·重构的数组方法有：push pop shift unshift splice sort reverse 使用这些方法的时候，数据也会更新
+·同时如果写成这样：<li v-for="itme,index of list">{{item.name}}+{{index}}</li>，那么这个index就表示下标值，比如给偶数项添加指定class：<li v-for="itme,index of list" :class="{box:index%2}">{{item.name}}</li>
+·如果一定要使用除了上面的重构方法之外的方法去达到数据绑定的效果时，可以使用内置方法去做：
+import Vue from 'vue'
+....
+Vue.set(this.list,1,{
+     title:'我改变了数组的第二项数据'
+})
+
+
+
+5---表单输入框的监听指令：v-model='data里面的数据'
+[1]:v-model默认使用，即使绑定数据
+new Vue({
+	el:'#dome',
+	data:{
+		text:'value'
+	}
+});
+<div id="dome">
+	<input type="text" v-model="value">
+	<p>{{text}}</p>
+</div>
+
+[2]:v-model.修饰符 (延时绑定数据,按下enter键或表单元素失去焦点时改变数据)
+·v-model.lazy：按下enter键或表单元素失去焦点时改变数据
+·v-model.number：输入的必须是纯数字
+·v-model.trim：去掉前后空格
+
+new Vue({
+	el:'#dome',
+	data:{
+		text:'value'
+	}
+});
+<div id="dome">
+	<input type="text" v-model.number="value">
+	<p>{{text}}</p>
+</div>
+
+
+6---显示和隐藏指令：v-show="表达式"   v-hide="表达式"
+v-show="真"的情况给这个元素添加display:block;
+v-show="假"的情况给这个元素添加display:none;
+
+[实例]：
+<span v-show="数据.length">xxxx</span>
+
+7---删除和添加：v-if="表达式"
+<span v-if="true">xxxx</span>		// 页面中添加这个元素
+<span v-if="false">xxxx</span>		// 页面中删除这个元素
+
+8---v-model的表单交互效果：checkbox和radio
+<input type="checkbox" name="" value="html" v-model="myVal"><label>html</label>
+<input type="checkbox" name="" value="css" v-model="myVal"><label>css</label>
+<input type="checkbox" name="" value="js" v-model="myVal"><label>js</label>
+<p>{{ myVal }}</p>	// myVal数据将会是所有选中的checkbox的value值(也可以改成radio单选框)
+
+new Vue({
+	el:'#dome',
+	data:{
+		myVal:[]
+	}
+});
+
+9---v-model的表单交互效果：select
+<select v-model="mySelected">
+  <option value="0">请选择</option>
+  <option value="a">选项1</option>
+  <option value="b">选项2</option>
+  <option value="c">选项3</option>
+</select>
+
+new Vue({
+	el:'#dome',
+	data:{
+		mySelected:'0'	// 默认让它选中value="0"的值(请选择)
+	}
+});
+
+/*------------------------------------------------------end指令------------------------------------------------------------------*/
+
+
+/*------------------------------------------------------模板------------------------------------------------------------------*/
+
+【html模板】：基于DOM的模板，模板都是可解析并且有效的html
+<div id="dome" :title="clas" v-on:click="callBack">
+	<P>姓名:{{name}}</P>
+	<P>年龄:{{age}}</P>
+</div>
+
+【插值模板】：
+文本：双大括号 {{数据}}；当值变化时，文本插值内容也会变化
+
+原生html：双大括号输出的是文本，不会成解析html
+[实例1]：
+new Vue({
+	el:'#dome',
+	data:{
+		html:'<p>hello word</p>'
+	}
+})
+<div id="dome">{{html}}</div>
+( 提示：最后页面输出内容为 <p>hello word</p>，并不会把html标签解析成真正的html，而是把它解析成了字符串 )
+
+[实例2]：改写上面的列子
+new Vue({
+	el:'#dome',
+	data:{
+		html:'<p>hello word</p>'
+	}
+})
+<div id="dome" v-html="html"></div>
+
+
+属性：使用v-bind进行绑定，可以响应变化
+// 绑定属性
+new Vue({
+	el:'#dome',
+	data:{
+		attr:'自定义属性名'
+	}
+})
+<div id="dome" v-bind:coust="attr"></div>
+
+// 判断是否绑定class：它和你之前在页面上写好的class是可以共存的
+new Vue({
+	el:'#dome',
+	data:{
+		addClass:true
+	}
+	
+})
+<div id="dome">
+	<span v-bind:class='{red:addClass}'>hello word</span>
+</div>
+
+使用javascript表达式：写简单的表达式
+<div id="dome">				// 最后输出 <div id="dome">3 yes</div>
+	{{ 1+2 }}
+	{{ true?'yes':'on' }}
+</div>
+
+
+【字符串模板】：
+
+[template字符串]：
+1---模板会替换挂载的元素，挂载的元素内容都将被模板内容替换
+new Vue({
+	el:'#dome',
+	data:{ name:'小明'},
+	template:'<p>姓名：{{name}}</p>'
+})
+
+<div id="dome">
+	<P>文字内容</P>
+</div>
+最后<div id="dome">元素会被全部替换成 ：<p>姓名：小明</p>
+
+2---模板里面只能有一个根节点
+new Vue({
+	el:'#dome',
+	data:{ name:'小明'},
+	template:'<p>姓名：{{name}}</p><span>xxx</span>'		// 这里出现了两个根节点 p和span,所以会报错，除非把span标签写在div里面
+})
+
+3---script标签渲染模板：只能在当前页面使用，不能跨页面使用
+new Vue({
+	el:'#dome',
+	data:{ name:'小明'},
+	template:'#temp'
+})
+
+<div id="dome">
+	<script type="x-template" id="temp">
+		<p>姓名:{{name}}</p>
+	</script>
+</div>
+最后<div id="dome">元素被替换成 ：<p>姓名:小明</p>
+
+4---render函数：以上3种模板都要经过这个render函数的调用处理后才会加入到DOM结构中，也称之为虚拟DOM函数
+new Vue({
+	el:'#dome',
+	data:{ name:'小明'},
+	render(creatElement){
+		return creatElement(
+			'ul',
+			{
+				class:{					// 添加class属性
+					bg:true
+				},
+				attrs:{					// 添加原生ID和自定义属性
+					id:'values'
+				},
+				style:{					// 添加行间样式属性
+					fontSize:'50px'
+				},
+				domProps:{				// 添加父级元素里面的innerHTML内容
+					innerHTML:'<li>我的优先级高点</li>'
+				},
+				on:{					// 绑定事件
+					click:function(){
+						alert(1)
+					}
+				}
+			},
+			[						// ul里面的子元素
+				creatElement('li',1),
+				creatElement('li',2),
+				creatElement('li',3)
+			]
+		);
+	}
+})
+
+
+/*------------------------------------------------------end模板------------------------------------------------------------------*/
+
+
+/*------------------------------------------------------事件修饰符------------------------------------------------------------------*/
+【概念】：methods里面的事件处理函数可以只有纯粹的逻辑判断，不处理DOM事件的细节部分，比如：阻止冒泡、取消默认行为、判断用户按键等细节
+【修饰符的位置】：v-on:eventName.修饰符
+【修饰符类型】：
+1---.stop：	阻止冒泡
+2---.prevent	取消默认行为	
+3---.capture
+4---.self
+5---.once	触发一次
+
+【按键修饰符】：
+enter		回车键
+tab		tab键
+delete
+esc
+space
+up
+down
+left
+right
+ctrl
+alt
+shift
+meta
+或者直接写键值
+
+
+[实例]：阻止冒泡
+var list=[
+	{name:'小明'},
+	{name:'小红'}
+];
+new Vue({
+	el:'#dome',
+	data:{
+		list:list
+	},
+	methods:{
+		callBack(ev){
+			console.log('vue已经阻止了冒泡事件')
+		}
+	}
+});
+
+<ul id="dome">
+	<li v-for="times in list" v-on:click.stop="callBack">{{times.name}}</li>
+</ul>
+(提示：修饰符可以写vue给我们提供好的方法，也可以自己按原始方法写)
+
+/*------------------------------------------------------end事件修饰符---------------------------------------------------------------*/
+
+
+/*------------------------------------------------------数据监听器------------------------------------------------------------------*/
+
+【watch属性】：当数据发生变化时触发
+
+[弱监听]：
+new Vue({
+	el:'',
+	data:{
+		list:'数据'
+	},
+	wacth:{
+		list:function(){alert('数据发生了变化')}
+	}
+});
+(提示：上面的那种写法是弱监听，它只能监听数据的第一层，每一条数据里面如果发生变化的话，它是无法监听的)
+
+[强监听]：handler  deep
+new Vue({
+	el:'',
+	data:{
+		list:'数据'
+	},
+	wacth:{
+		list:{
+			handler:function(){
+				alert('数据发生了变化')
+			}，
+			deep:true
+		}
+	}
+});
+(提示：上面的那种写法是强监听，它能监听到任何层次的数据变化)
+
+
+【本地存储方法】：localStorage   假设要存储的数据为数组对象的形式 [{xxx},{xxx}]
+let store = {
+    // 存储数据
+    save(key,value){             
+        localStorage.setItem(key,JSON.stringify(value));
+    },
+    // 设置数据  获取数据 
+    fetch(key){
+        return JSON.parse(localStorage.getItem(key)) || [];
+    }
+};
+
+store.fetch('数据名称');			// 设置数据名称
+store.save('数据名称','要存的数据')	// 存储数据
+
+
+【监听hash值变化方法】：hashchange
+window.addEventListener('hashchange', function(){
+           console.log('hash值发生了变化')
+});
+
+
+
+[练习]：任务列表
+
+
+/*------------------------------------------------------end数据监听器------------------------------------------------------------------*/
+
+
+/*------------------------------------------------------------组件---------------------------------------------------------------------*/
+
+【概念】：页面中的导航、侧票、列表等都是页面中的组件，他们组合起来形成完整的页面，同时删除或替换某个组件而又不会影响到整个页面的功能和布局
+
+【优势】：提高效率、方便重复使用、便于协同开发等
+
+【vue中的组件化】：
+1---它是一个自定标签，VueJS的编译器为它们添加了特殊的功能
+2---vue也可以扩展原生的html元素，封装成可重用的代码
+3---vue中组件的组成：样式结构、行为逻辑、数据
+
+
+【vue组件化开发过程】：
+1---注册组件
+
+【注册组件】：全局注册  局部注册
+[全局注册]: Vue.component('自定义标签名',{})
+<div id="app1">
+	<h2>全局自定义组件</h2>
+	<custom-select></custom-select>    	 // 注意这里只能使用‘烤串’命名法
+</div>
+<div id="app2">
+	<h2>全局自定义组件</h2>
+	<custom-select></custom-select>    	 // 注意这里只能使用‘烤串’命名法
+</div>
+
+<script>
+	Vue.component('custom-select',{		 // 注意这里可以使用‘烤串’命名法，也可以用‘驼峰’命名法，但建议都用‘烤串’命名法
+		template:`<p>结构内容</p>`
+	});
+	new Vue({		// 注意不管是全局注册还是局部注册都必须实例化vue。全局注册实例化el属性不能为空，必须有个id值,并且实例化vue必须在component下面执行
+		el:'#app' 或者 '#app1'
+	});
+</script>
+
+
+[局部注册]：Vue里面的components属性
+<div id="app">
+	<h2>局部自定义组件</h2>
+	<custom-select></custom-select>    	 // 注意这里只能使用‘烤串’命名法
+</div>
+
+new Vue({
+	el:'#app',
+	components:{
+		'custom-select':{		// 注意局部注册组件名称如果和全局的相同，那么局部的会覆盖全局的
+			template:`<p>局部自定义组件</p>`
+		}
+	}
+});
+
+
+【组件之间的通信】：
+
+[父组件 --> 子组件]:
+组件实例的作用域是孤立的，不能在子组件里面直接用父组件里面的数据。
+可以在组件上使用自定义属性绑定数据，在组件中需要显示的用props声明自定义属性名。
+
+[实例1]：元素身上去绑定数据
+<div id="app1">
+	<custom-select datavlus="数据1"></custom-select>    	 
+</div>
+<div id="app2">
+	<custom-select datavlus="数据2"></custom-select>    	 
+</div>
+
+Vue.component('custom-selectad',{
+	props:['datavlus'],
+	template:`<p>{{datavlus}}</p>`
+});
+
+
+[实例2]：在vue里面去传人数据(外部导入数据)
+<div id="app1">
+	<custom-select v-bind:datavlus="list"></custom-select>    	 
+</div>
+<div id="app2">
+	<custom-select v-bind:datavlus="list"></custom-select>     	 
+</div>
+
+Vue.component('custom-selectad',{
+	props:['datavlus'],
+	template:`<p>{{datavlus}}</p>`
+});
+
+new Vue({
+	el:'#app1',
+	data:{ list:'数据1' }
+});
+
+new Vue({
+	el:'#app2',
+	data:{ list:'数据2' }
+});
+
+
+[实例3]：在vue里面去传人数据(内部导入数据)
+Vue.component('ps',{
+	data:function(){		// data为一个函数，这样可以让数据独立不受影响
+		return {
+			name:'数据'
+		}
+	},
+	template:`<p>{{name}}</p>`
+});
+
+new Vue({
+	el:'#dome'
+});
+
+
+[实例4]：自定义组件的嵌套
+Vue.component('list-wrap',{
+	template:`<div>
+				<list-p></list-p>
+			</div>`
+});
+
+Vue.component('list-p',{
+	template:`<p>123</P>`
+});
+
+new Vue({
+	el:'#dome'
+});
+
+<div id="dome">
+	<list-wrap></list-wrap>
+</div>
+
+
+[实例4]：自定义组件里面触发事件
+Vue.component('list-wrap',{
+	template:`<div v-on:click="eventClick">123</div>`,
+	methods:{
+		eventClick(){
+			console.log(1)
+		}
+	}
+});
+
+new Vue({
+	el:'#dome'
+});
+
+<div id="dome">
+	<list-wrap></list-wrap>
+</div>
+
+
+
+[子组件-->父组件]:
+需要用到自定义事件，父组件用$on监听自定义事件，$emit触发父组件的自定义事件。
+Vue.component('list-wrap',{
+	template:`<div v-on:click="eventClick">123</div>`,
+	methods:{
+		eventClick(){
+			this.$emit('event-click');
+		}
+	}
+});
+
+new Vue({
+	el:'#dome',
+	methods:{
+		bindClick(){
+			console.log('组件内部发生了变化')
+		}
+	}
+});
+
+<div id="dome">
+	<list-wrap v-on:event-click="bindClick"></list-wrap>
+</div>
+
+【让组件符合W3C标准-组件标签嵌套】：is="自定义组件名"
+<table>
+    <tr is="自定义组件名"></tr>		// 组件模板会替换整个tr标签，并且能兼容W3C标准
+</table>
+
+
+【单向数据流】:
+概念1：数据从父组件传递给子组件，只能单向绑定，在子组件内部不应该修改父组件传递过来的数据
+概念2：组件里面数据发生了响应，要想通知到外面，必须使用自定义事件，然后在组件内部使用$emit监听
+
+[实例1]：
+Vue.component('custom-component',{
+	props:['coust'],
+	data(){
+		return {
+			dataCoust:this.coust 		// 用自带的data数据去绑定外面传人的数据,不要直接改变coust数据
+		}
+	},
+	template:`<div>
+				<h2>我是自定义组件</h2>
+				<P>{{dataCoust}}</P>
+				<button type="button" v-on:click="changeCoust">点击</button>
+			</div>`,
+	methods:{
+		changeCoust(){
+			this.dataCoust='改变外面的数据';
+		}
+	}
+});		
+
+new Vue({
+	el:'#dome',
+	data:{
+		list:'我是外面的数据'
+	}
+});
+
+<div id="dome">
+	<custom-component v-bind:coust="list"></custom-component>
+</div>
+
+
+[实例2]：
+当组件外面和组件里面同时用到了同一个数据时，如果组件里面数据被改变了，如何响应到组件外面的数据
+
+[实例]：
+Vue.component('custom-component',{
+	props:['coust'],
+	data(){
+		return {
+			dataCoust:this.coust 		
+		}
+	},
+	template:`<div>
+				<h2>我是自定义组件</h2>
+				<P>{{dataCoust}}</P>
+				<button type="button" v-on:click="changeCoust">点击</button>
+			</div>`,
+	methods:{
+		changeCoust(){
+			this.dataCoust='改变外面的数据';
+			this.$emit('event-click');	// 监听组件外面发生的自定义事件并触发对应的事件处理程序
+		}
+	}
+});		
+
+new Vue({
+	el:'#dome',
+	data:{
+		list:'我是外面的数据'
+	},
+	methods:{
+		changeHandler(){
+			console.log('组件里面的数据发生了变化')
+		}
+	}
+});
+
+<div id="dome">
+	<P>{{list}}</P>
+	<custom-component v-bind:coust="list" v-on:event-click="changeHandler"></custom-component>
+</div>
+
+
+【props验证数据】：
+概念：组件可以为props指定验证要求，如果未指定验证要求，Vue会发出警告
+
+[实例]：
+Vue.component('custom-component',{
+	props:{
+		coust:{					// 对传入的参数做验证，如果不满足下面的规则，vue会主动报错,
+			type:Number,			// 验证传人的参数是否为Number类型，当然还可以有其他类型，如果是多类型的验证的话，可以使用数组 [Number,String,...]
+			required:true,			// 是否为必传参数
+			default:10,			// 如果不传人参数，那么coust默认值为10			
+			validator:function(value){	// 自定义数据验证规则 value是传人的参数
+				return value>5;		// 传入的参数做细节判断
+			}
+		}
+	},
+	data(){
+		return {
+			dataCoust:this.coust 		
+		}
+	},
+	template:`<div>
+				<h2>我是自定义组件</h2>
+				<P>{{dataCoust}}</P>
+				<button type="button" v-on:click="changeCoust">点击</button>
+			</div>`,
+	methods:{
+		changeCoust(){
+			this.dataCoust++;
+		}
+	}
+});		
+
+new Vue({
+	el:'#dome',
+	data:{
+		list:0
+	}
+});
+
+<div id="dome">
+	<custom-component v-bind:coust="list"></custom-component>
+</div>
+
+
+
+【slot分发内容】：
+概念：使用一种方式混合父组件的内容与子组件的模板。这个过程被称为"内容分发"。
+      在子组件中使用特殊的<slot>标签作为内容的插槽,这样会使组件的扩展性更强。
+      在子组件模板中有slot标签，被视为备用内容，在父组件不提供内容的情况下使用。
+      如果父组件提供了内容，则把整个内容片断插入到slot所在的DOM位置上，并替换掉slot标签本身。
+      子组件模板中如果没有slot标签，父组件提供的内容会被抛弃掉。
+
+[实例1]：插入模板
+<div id="dome">
+	<custom>
+		<div>我要插入到组件的模板中</div>
+	</custom>
+</div>
+<script>
+	Vue.component('custom',{
+		template:`<div>
+					<slot></slot>						// 这个slot标签会被替换成：<div>我要插入到组件的模板中</div>
+					<slot>我是默认内容</slot>				// 如果custom里面不传人内容的话,就显示默认内容
+					<p>我是组件中的内容</p>
+				</div>`
+	});
+
+	new Vue({
+		el:'#dome'
+	});
+</script>
+
+[实例2]：替换组件模板
+<div id="dome">
+	<custom>
+		<div>我要替换组件中的内容</div>
+	</custom>
+</div>
+<script>
+	Vue.component('custom',{
+		template:`<div>
+			// 如果用slot标签包住模板中的内容，那么在custom里面有内容时，就会替换整个slot标签，没有内则忽视
+			<slot>	
+				<p>我是组件中的内容</p>
+			</slot>
+		</div>`
+	});
+
+	new Vue({
+		el:'#dome'
+	});
+</script>
+
+[实例3]：按指定要求替换组件模板
+1---单个替换：
+<div id="dome">
+	<custom>
+		<div slot="two">我要替换组件第2个模板内容</div>
+		<div slot="one">我要替换组件第1个模板内容</div>
+	</custom>
+</div>
+<script>
+	Vue.component('custom',{
+		template:`<div>
+			<slot name="one"><p>我是组件中的第1个模板内容</p></slot>
+			<slot name="two"><p>我是组件中的第2个模板内容</p></slot>
+		</div>`
+	});
+
+	new Vue({
+		el:'#dome'
+	});
+</script>
+
+2---批量替换：template内置标签
+<div id="dome">
+	<custom>
+		<div slot="one">我要批量替换组件第1个模板内容</div>
+		<template slot="two">
+			<div>我要批量替换组件第2个模板内容</div>
+			<div>我要批量替换组件第2个模板内容</div>
+			<div>我要批量替换组件第2个模板内容</div>
+		</template>
+	</custom>
+</div>
+<script>
+	Vue.component('custom',{
+		template:`<div>
+			<slot name="one"><p>我是组件中的第1个模板内容</p></slot>
+			<slot name="two"><p>我是组件中的第2个模板内容</p></slot>
+		</div>`
+	});
+
+	new Vue({
+		el:'#dome'
+	});
+</script>
+
+
+3---组件中的作用域
+<div id="dome">
+	<custom>
+		<p slot="cr">{{message}}</p>
+	</custom>
+</div>
+<script>
+	Vue.component('custom',{
+		data:function(){
+			return {
+				message:'我是组件内部数据'
+			}
+		},
+		template:`<div>
+					<p>{{message}}</p>		// 我是组件内部数据
+					<slot name="cr"></slot>		// 我是组件外部数据
+				</div>`
+	});
+
+	new Vue({
+		el:'#dome',
+		data:{
+			message:'我是组件外部数据'
+		}
+	});
+</script>
+
+
+【动态组件&组件切换】：
+1---多个组件可以使用同一个挂载点，动态地在它们之间切换。使用保留的<component>元素，绑定is特性进行动态绑定
+2---可以使用keep-alive把切出去的组件保留在内存中，这样可以保留它的状态，避免重新渲染。
+
+[实例1]：组件自由切换
+<div id="app">
+	<input type="button" v-on:click="tabComponent(1)" value="切换到第1个组件">
+	<input type="button" v-on:click="tabComponent(2)" value="切换到第2个组件">
+	<input type="button" v-on:click="tabComponent(3)" value="切换到第3个组件">
+
+	<component v-bind:is="current"></component>
+</div>
+
+<script>
+	var custom1 = Vue.component('custom1',{
+		template:`<p>我是第1个组件</P>`
+	});
+	var custom2 = Vue.component('custom2',{
+		template:`<p>我是第2个组件</P>`
+	});
+	var custom3 = Vue.component('custom3',{
+		template:`<p>我是第3个组件</P>`
+	});
+
+	new Vue({
+		el:'#app',
+		data:{
+			current:custom1
+		},
+		methods:{
+			tabComponent(index){
+				if(index===1){
+					this.current=custom1;
+				}else if(index===2){
+					this.current=custom2;
+				}else if(index===3){
+					this.current=custom3;
+				}
+			}
+		}
+	});
+</script>
+
+[实例2]：组件自由切换并保留状态
+<div id="app">
+	<input type="button" v-on:click="tabComponent(1)" value="切换到第1个组件">
+	<input type="button" v-on:click="tabComponent(2)" value="切换到第2个组件">
+	<input type="button" v-on:click="tabComponent(3)" value="切换到第3个组件">
+	<keep-alive>
+		<component v-bind:is="current"></component>
+	</keep-alive>
+</div>
+
+<script>
+	var custom1 = Vue.component('custom1',{
+		template:`<p v-on:click="changeBackground($event)">我是第1个组件</P>`,
+		methods:{
+			changeBackground(event){
+				event.target.style.background='green';
+			}
+		}
+	});
+	var custom2 = Vue.component('custom2',{
+		template:`<p v-on:click="changeBackground($event)">我是第2个组件</P>`,
+		methods:{
+			changeBackground(event){
+				event.target.style.background='red';
+			}
+		}
+	});
+	var custom3 = Vue.component('custom3',{
+		template:`<p v-on:click="changeBackground($event)">我是第3个组件</P>`,
+		methods:{
+			changeBackground(event){
+				event.target.style.background='blue';
+			}
+		}
+	});
+
+	new Vue({
+		el:'#app',
+		data:{
+			current:custom1
+		},
+		methods:{
+			tabComponent(index){
+				if(index===1){
+					this.current=custom1;
+				}else if(index===2){
+					this.current=custom2;
+				}else if(index===3){
+					this.current=custom3;
+				}
+			}
+		}
+	});
+</script>
+
+
+
+[实例]：封装组件
+1---select组件
+2---模态框
+3---alert提示框
+4---树形菜单
+
+
+/*-----------------------------------------------------------end组件-------------------------------------------------------------------*/
+
+
+
+
+
+/*---------------------------------------------------------------------------vueJs进阶部分-------------------------------------------------------------------------*/
+
+【vue进阶部分内容】：
+1---vue-cli	脚手架
+2---vue-router	视图管理（API：https://router.vuejs.org/zh-cn/advanced/lazy-loading.html）
+3---Vuex	状态管理	(API：https://vuex.vuejs.org/zh-cn/api.html)
+4---axios	数据请求
+
+
+【vue-cli脚手架】：
+1---生成目录结构
+2---本地开发调试
+3---代码部署
+4---热加载
+5---单元测试
+
+[检查NodeJs版本]：版本在 4.x 6.x 版本
+[检查npm版本]：   版本在 3.x 以上版本
+
+[安装vue-cli]：npm install -g vue-cli    
+1---使用 vue -V 命令查看是否出现版本号
+2---安装成功后提示版本号
+
+[使用webpack创建目录]：vue init webpack 文件名
+1---? Project name (文件名)：询问是否用这个文件名
+2---? Project description (A Vue.js project)：文件的描述
+3---? Author ....：作者名字
+4---? Install vue-router? (Y/n)：是否加载vue-router
+5---? Use ESLint to lint youir code? (Y/n)：是否检查代码风格
+6---? Setup unit testes.....：是否做单元测试
+7---? Setup e2e.....：是否需要e2e
+8---之后便提示下一步操作的信息：如何运行进入项目(cd 文件名)、安装所有模块(npm install)、启动应用(npm dev)
+(完成上面的填写后就会在你的文件夹里面生成你之前定好的"文件名")
+
+[进入安装好的目录里面]：         
+1---运行 cd "你的文件名"  	// 进入你的项目
+2---npm install			// 安装所有模块
+3---git启动应用：npm run dev 	// 或者你也可以用webstrom启动方法 
+
+[文件打包-生成dist压缩文件]：npm run build
+在config文件夹下面的index.js里面可以修改项目资源路径，build下面的assetsPublicPath改成你的资源路径即可，那么a或者img的地址信息都会以这个为路径前缀
+
+【vue-cli脚手架的文件介绍】：
+1---bulid：webpack配置相关文件
+2---config：生成环境和开发环境的一些配置参数
+3---node_modules：第三方依赖
+4---src：写项目的源码文件，里面的App.vue是单文件组件
+5---static：放置第三方资源的
+6---.babelrc：转换ES5语法(里面可做自己的配置)
+7---.deitorconfig：编辑器使用的，配置文件编码、缩进形式等信息
+8---.eslintignore：代码风格检测（在"rules"里面配置'no-unused-vars': 0   这样声明的变量可以不使用并且不会报错）
+9---.eslintrc.js：   代码风格检测（默认声明的变量必须使用，否则报错）
+10--gitignore：    使用git做提交的时候，忽略掉一些文件
+11--postcssrc.js： css规则
+12--index.html：   项目模板html页面
+13--package.json：整个项目的描述
+14--README.md：    
+
+
+【webpack基本配置】：bulid文件和config文件
+
+【webpack热更新配置】：
+
+【开发环境文件服务配置】：
+
+【在组件中使用less】
+1---安装less和导入less
+npm install less --save-dev
+npm install less-loader --save-dev
+
+2---使用less
+<style lang="less">
+     .......
+<style>
+
+
+【vue-router路由】：
+1---前端路由：在web开发中，路由是根据url分配到对应的处理程序
+2---vue路由： 通过管理url，实现url和组件的对应和通过url进行组件之间的切换
+
+[使用步骤]：
+1---安装模块：npm install vue-router --save   （如果使用了vue-cli它内部已经安装了）
+2---引入模块：import VueRouter from 'vue-router'
+3---作为Vue的插件：Vue.use(VueRouter)
+4---创建路由实例对象：
+      new VueRouter({
+	...配置参数
+      })
+5---注入Vue选项参数：
+      new Vue({
+	router
+      })
+6---告诉路由渲染位置：<router-view></router-view>
+
+
+
+[在man.js里面配置路由]：
+
+1---在man.js里面配置
+import Vue from 'vue'			// 引人Vue
+import VueRouter from 'vue-router'	// 引人vueRouter插件
+// 作为Vue的插件
+Vue.use(VueRouter)
+import App from './App'
+import home from '@/components/home'	// 引入特定home组件
+// 导入home组件
+var vmHome = new VueRouter({
+  routes: [
+    {
+      path: '/',	// 路径
+      component: home	// 路径对应的组件
+    }
+  ]
+})
+
+var vmApp = new Vue({
+  el: '#app',
+  router: vmHome,		// 注入home组件
+  template: '<App />',
+  components: { App }
+})
+
+2---在component文件里面写组件：
+<template></template>
+<script></script>
+<style scoped></style>		// 给style标签加上scoped属性后，表示只在当前组件使用这些css样式
+
+
+[在实际项目中如何配置vueRouter]：
+1---在src文件下面创建文件 比如：routers
+2---在routers文件夹中创建index.js文件，文件中内容如下：
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+Vue.use(VueRouter)
+import home from '@/components/home'
+var routerHome = new VueRouter({
+  routes: [
+    {
+      path: '/',
+      component: home
+    }
+  ]
+})
+export default routerHome;
+
+3---在component文件里面写组件：注意，组件模板里面只能有一个根节点
+<template>
+	<div>我是组件</div>	
+</template>
+<script></script>
+<style></style>
+
+4---在man.js里面配置
+import Vue from 'vue'
+import App from './App'
+import routerHome from '@/routers'
+var vmApp = new Vue({
+  el: '#app',
+  router: routerHome,
+  template: '<App />',
+  components: { App }
+})
+
+[实例1]：路由切换 (hash模式)  高底版本都能用
+
+1---在routers自己创建的组件文件夹里面去配置index.js文件
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+Vue.use(VueRouter)
+
+import home from '@/components/home'
+import about from '@/components/about'
+import document from '@/components/document'
+
+var routerHome = new VueRouter({
+  routes: [
+    {
+      path: '/home',
+      component: home
+    },
+    {
+      path: '/about',
+      component: about
+    }
+  ]
+})
+
+2---在components组件管理文件夹里面去创建自己的组件
+// home.vue文件
+<template>
+  <p>页面1</p>
+</template>
+.....
+
+// about.vue文件
+<template>
+  <p>页面2</p>
+</template>
+......
+
+3---man.js：
+import Vue from 'vue'
+import App from './App'
+import routerHome from '@/routers'
+import '@/assets/css/app.css'		// 引入css，当然也可以写在组件内部
+var vmApp = new Vue({
+  el: '#app',
+  router: routerHome,
+  template: '<App />',
+  components: { App }
+})
+
+4---在App.vue入口文件里面去写入路由，其实就是配置a的href值
+<div class="nav-box">
+        <ul class="nav">
+          <li>
+            <a href="#/home">home</a>
+          </li>
+          <li>
+            <a href="#/about">about</a>
+          </li>
+        </ul>
+    </div>
+    <router-view></router-view>
+
+[实例2]：路由切换 (history模式)  高版本用
+
+1---在routers自己创建的组件文件夹里面去配置index.js文件    配置mode
+
+var routerHome = new VueRouter({
+  mode: 'history',	// 注意在生成dist生成环境下的文件时，要去掉这个mode
+  routes: [
+    {
+      path: '/home',
+      name:'Home',
+      component: home
+    },
+    {
+      path: '/about',
+      name:'About',
+      component: about
+    }
+  ]
+})
+
+2---在App.vue入口文件里面去写入路由，其实就是把a链接换成 router-link
+<div class="nav-box">
+       <ul class="nav">
+          <li>
+            <router-link to="/home" tag="a">home</router-link>
+          </li>
+          <li>
+            <router-link to="/about" tag="a">about</router-link>
+          </li>
+       </ul>
+</div>
+<router-view></router-view>
+
+
+[router-link配置项]：
+1---to="路由跳转地址" (to可以有三种形式绑定链接地址)
+2---tag="你希望生成的标签名"
+3---event="事件名"
+4---router-link可以代替任何标签：点击整个li都可以路由切换  
+
+<div class="nav-box">
+        <ul class="nav">
+          <router-link to="/home" event="mouseover" tag="li">
+            <span>home</span>
+          </router-link>
+          <router-link :to="{name:'About'}" tag="li">
+            <span>about</span>
+          </router-link>
+          <router-link :to="{path:'/document'}" tag="li">
+            <span>document</span>
+          </router-link>
+       </ul>
+</div>
+<router-view></router-view>
+
+4---router-link激活class样式：(可以只用第3步完成激活class)
+(1)预留全局激活class：router-link-active
+(2)自定义激活class：在routers路由配置文件夹里面配置
+var routerHome = new VueRouter({
+  mode: 'history',
+  routes: [
+    {
+      path: '/',	// 默认的子路由
+      component: home
+    },
+    {
+      path: '/about',
+      component: about
+    }
+  ]
+})
+(3)单独设置每一个路由的激活class：active-class="自定义激活class名"
+<div class="nav-box">
+        <ul class="nav">
+          <router-link to="/" exact tag="li" active-class="color1">
+            <span>home</span>
+          </router-link>
+          <router-link to="/about" tag="li" active-class="color2">
+            <span>about</span>
+          </router-link>
+       </ul>
+</div>
+<router-view></router-view>
+
+<style>
+.color1 { background: yellow; }
+.color2 { background: blue; }
+.color3 { background: green; }
+</style>
+(exact : 精确匹配设置)
+
+5---访问不存在的页面，它会显示空白内容页面，但我们想显示一个正确的提示页面
+(1)访问不存在页面跳转到指定页面--需要在index.js里面配置
+var routerHome = new VueRouter({
+  mode: 'history',
+  linkActiveClass: '自己定义的class名',
+  routes: [
+    {
+      path: '/home',
+      component: home
+    },
+    {
+      path: '/about',
+      component: about
+    },
+    {
+      path: '*',
+      component: NoFound	// 自己在components文件里面配置这个页面（先引入这个404页面）
+    }
+  ]
+})
+
+(2)访问不存在页面跳转到另一个页面(重定向)--需要在index.js里面配置
+var routerHome = new VueRouter({
+  mode: 'history',
+  linkActiveClass: '自己定义的class名',
+  routes: [
+    {
+      path: '/home',
+      component: home
+    },
+    {
+      path: '/about',
+      component: about
+    },
+    {
+      path: '*',
+      redirect: '/home'   	   // 访问不存在地址时，重定向到指定页面（地址形式，推荐写法）
+      //redirect: {name: 'Home'}   // 访问不存在地址时，重定向到指定页面（name形式）
+      //redirect: {path: '/home'}  // 访问不存在地址时，重定向到指定页面（path形式）
+    }
+  ]
+})
+
+(3)访问不存在指定链接跳转到另一个页面(重定向)--需要在index.js里面配置
+var routerHome = new VueRouter({
+  mode: 'history',
+  routes: [
+    {
+      path: '/home',
+      component: home
+    },
+    {
+      path: '/about',
+      component: about
+    },
+    {
+      path: '*',
+      redirect: (to) => {
+        if ( to.path === '123' ) {	// 如果访问123这个路径，就让页面跳转到home页面
+          return '/home'
+        }
+      }
+    }
+  ]
+})
+
+
+[实例3]：组件嵌套配置(自路由配置)
+
+(1)在src文件加下面创建子路由文件，比如;views文件，里面有 study1.vue study2.vue 文件
+
+(2)在index.js文件里面去配置
+// 引入文件
+import study1 from '@/views/study1.vue'
+import study2 from '@/views/study2.vue'
+import study3 from '@/views/study3.vue'
+
+// 配置文件
+var routerHome = new VueRouter({
+  mode: 'history',
+  linkActiveClass: '自己定义的class名',
+  routes: [
+    {
+      path: '/',
+      component: home
+    },
+    {
+      path: '/about',
+      component: about,
+      children: [
+	{
+          path: '',		// 默认的子路由
+          name: 'About',     	// 设置了默认子路由后，如果父级有name属性，就把它拿到这里，否则study1视图无法渲染
+          component: study1
+        },
+        {
+          path: 'study2',
+          component: study2
+        }
+      ]
+    }
+  ]
+})
+
+
+// 在指定文件比如about.vue里面配置子路由
+<ul>
+      <router-link to="/about" exact tag="li">
+        <a>stude1</a>
+      </router-link>
+      <router-link to="/about/study2" tag="li">
+        <a>stude2</a>
+      </router-link>
+      <router-link to="/about/study3" tag="li">
+        <a>stude3</a>
+      </router-link>
+</ul>
+<router-view></router-view>
+
+
+[实例4]：路径的配置(路径比较长时，可以配置name去代替路径)
+// 在指定文件比如about.vue里面配置子路由
+<ul>
+      <router-link :to="{name:'About'}" exact tag="li" active-class="liclass">
+        <a>stude1</a>
+      </router-link>
+      <router-link :to="{name:'Study2'}" tag="li" active-class="liclass">
+        <a>stude2</a>
+      </router-link>
+</ul>
+<router-view></router-view>
+
+// 在index.js文件里面去配置name
+var routerHome = new VueRouter({
+  mode: 'history',
+  linkActiveClass: '自己定义的class名',
+  routes: [
+    {
+      path: '/home',
+      component: home
+    },
+    {
+      path: '/about',
+      component: about,
+      children: [
+        {
+          path: '',
+          name: 'About',
+          component: study1
+        },
+        {
+          path: 'study2',
+          name: 'Study2',
+          component: study2
+        }
+      ]
+    }
+  ]
+})
+
+
+
+[实例5]：命名视图(在同级同时展示多个视图，而不是嵌套展示)
+// 在App.vue里面配置多个视图挂载点
+<router-view name="slider"></router-view>	// 有name名字的是特定挂载点
+<router-view></router-view>			// 没有name名字的是公共挂载点
+
+// 在index.js里面配置
+import slider from '@/views/slider.vue'     	// 先引入组件
+......
+var routerHome = new VueRouter({
+  mode: 'history',
+  routes: [
+    {
+      path: '/home',
+      components: {
+        default: home,		// 默认组件
+        slider: slider		// 替换App.vue里面的特定组件位置<router-view name="slider"></router-view>
+      }
+    },
+    {
+      path: '/about',
+      component: about,
+      children: [
+        {
+          path: 'study1.vue',
+          name: 'Study1',
+          component: study1
+        },
+        {
+          path: 'study2.vue',
+          name: 'Study2',
+          component: study2
+        }
+      ]
+    }
+  ]
+})
+
+
+
+[实例6]：记录每个视图页面的滚动条位置
+var routerHome = new VueRouter({
+  mode: 'history',
+  scrollBehavior (to, from, savePosition) {   // 点击浏览器前进后退或者用路由切换视图的时候触发
+    console.log(to)           // 要进入的目标路由对象
+    console.log(from)         // 离开的目标路由对象
+    console.log(savePosition) // 记录滚动条的坐标(点击浏览器前进后退按钮时记录)
+    if (savePosition) {	      // 记录滚动条位置判断代码
+      return savePosition
+    } else {
+      return { x: 0, y: 0 }
+    }
+  },
+.....
+
+
+var routerHome = new VueRouter({
+  mode: 'history',
+  linkActiveClass: 'link-active',
+  scrollBehavior (to, from, savePosition) {   // 点击浏览器前进后退或者用路由切换视图的时候触发
+    if (to.hash) {	      		      // 根据锚点定位(需要配置锚点)
+      return {
+        selector: to.hash
+      }
+    }
+  },
+.....
+(提示1：<router-link to="/document#abc">)
+(提示1：在document.vue页面里面给某个元素添加id="abc")
+
+
+[实例7]：动态路径
+1---匹配到的所有路由，全都映射到同一个组件
+2---动态生成路径：比如 /user/:userId  userId即为动态路径参数
+3---获取参数：路由信息对象的params
+4---注意key值必须要加上
+
+// 创建user.vue页面
+<template>
+  <div class="center">
+    我是user
+    <hr>
+    <div class="userList">
+      <router-link :to=" '/user/'+item.tip+'/'+item.id " exact key="index" v-for="item,index in userList" style="padding: 0 20px;">{{ item.userName }}</router-link>
+    </div>
+    <div class="user-info" v-if="userInfo.userName">
+      <P>姓名：{{ userInfo.userName }}</P>
+      <P>性别：{{ userInfo.sex }}</P>
+      <P>级别：{{ userInfo.tip }}</P>
+      <P>爱好：{{ userInfo.hobby }}</P>
+    </div>
+  </div>
+  <!--以下是查询字符串方法匹配数据-->
+  <div class="info-list" v-if="userInfo.userName">
+      <router-link exact to="?info=follow">他的关注</router-link>
+      <router-link exact to="?info=share">他的分享</router-link>
+  </div>
+  <!--通过$route.query获取url?后面的数据-->
+  <div>{{ $route.query }}</div>
+  <!--end-->
+</template>
+
+<script>
+  let data = [
+    {
+      id:1,
+      tip:'vip',
+      userName:"leo1",
+      sex:'男',
+      hobby:'写代码'
+    },
+    {
+      id:2,
+      tip:'vip',
+      userName:"leo2",
+      sex:'男',
+      hobby:'唱歌'
+    },
+    {
+      id:3,
+      tip:'common',
+      userName:"leo3",
+      sex:'男',
+      hobby:'读书'
+    }
+  ];
+  export default {    // this.$route包含每个路由对象的实例对象
+      data(){
+          return {
+              userList: data,
+              userInfo: {}
+          }
+      },
+      watch:{         // 监控 $route是否发生变化(页面hash值是否发生变化)
+          $route(){
+              var id = this.$route.params.userId;  //// 获取路由信息$route里面的params里面的userId值
+              this.getID(id);
+          }
+      },
+      created(){      // 执行路由函数(生命周期函数)
+          var id = this.$route.params.userId;
+          this.getID(id);
+      },
+      methods:{
+          getID(id){
+            if( id ){     // 通过ID去筛选数据
+                this.userInfo = this.userList.filter( (item)=>{
+                  return item.id == id;
+                } )[0]
+              }else{
+                this.userInfo = {};
+              }
+          }
+      }
+  }
+</script>
+
+//在index.js页面引入user.vue
+import user from '@/components/user'
+{
+      path: '/user/:tip?/:userId?',     // 自动匹配: /user/vip/1  /user/vip/2  /user/common/3  /user
+      name: 'User',
+      component: user
+},
+(正则匹配：userId?  userId为自己定义的)
+
+[动态路径]：查询字符串筛选数据
+<template>
+    <div>
+        我是user页面
+        <div class="user-list">
+            <router-link :to="{ path:'/user/'+item.tip+'/'+item.id,query:{info:'follow'} }" key="index" v-for="item,index in dataList">
+                {{ item.userName }}
+            </router-link>
+        </div>
+        <hr>
+        <div class="user-info" v-if="userInfo.userName">
+            <p>性别：{{ userInfo.sex }}</p>
+            <p>等级：{{ userInfo.tip }}</p>
+            <p>爱好：{{ userInfo.hobby }}</p>
+        </div>
+        <div class="info-list" v-if="userInfo.userName">
+            <router-link :to="{path:'',query:{info:'follow'}}" exact>我的关注</router-link>
+            <router-link :to="{path:'',query:{info:'share'}}" exact>我的收藏</router-link>
+        </div>
+        <div v-if="userInfo.userName">
+            {{ $route.query }}		// 获取url?后面的数据
+        </div>
+    </div>
+</template>
+.........
+
+
+[实例8]：过渡动效
+1---提供了transition的封装组件，添加动画
+2---添加删除css类名
+3---设置name属性可以指定单独的css组
+4---两种过渡模式:(如果不写这个，动画是同时进行的)
+	1---in-out:新元素先进行过渡，完成后当前元素过渡离开
+	2---out-in:当前元素先进行过渡，完成之后新元素过渡进入
+5---动画效果的自由切换：meta属性配置
+// 指令列表(开始--进入--结束)(v-前缀可以替换)
+v-enter:定义进入过渡的开始状态
+v-enter-active:定义进入的活动状态(定义开始运动形式)
+v-enter-to:定义进入的结束状态
+v-leave:定义离开的开始状态
+v-leave-active:定义离开的活动状态(定义结束运动形式)
+v-leave-to:定义离开的结束状态
+
+6---通过vue内置的js指令去控制动画
+<transition @before-enter="beforeEnterFn" @enter="enterFn" @leave="leaveFn" :css="false" v-show="changeShow">
+  <p>页面元素</p>
+</transition>
+
+export default {
+      methods:{
+          beforeEnterFn(el){		// 动画进入函数 el 代表元素 $(el)是jq的写法
+            $(el).css({
+                left:'-500px',		// 元素$(el)从-500px的地方运动
+                opacity:0		// opacity属性为0
+            })
+          },
+          enterFn(el,done){		// 动画目标点函数
+            $(el).animate({
+                left:'200px',		// 元素$(el)运动到200px的地方停止
+                opacity:1		// opacity属性为1
+            },{
+                duration:1000,		// 所用时间为1000sm
+                complete:done		// 如果使用jq需要要调用这个done函数，不使用就去掉这个参数
+            })
+          },
+	  afterEnter(el){		// 动画结束执行函数
+		........
+	  },
+          leaveFn(el,done){		// 动画离开函数
+              $(el).animate({
+                  left:'500px',		// 元素$(el)运动到500px的地方结束
+                  opacity:0		// opacity属性为0
+              },{
+                  duration:1000,	// 所用时间为1000sm
+                  complete:done		// 要调用这个done函数
+              })
+          }
+      }
+  }
+
+( 提示1：$(el)为页面元素，但要先引入jquery，在index.html入口页面引入即可 )
+( 提示2：:css="false"设置这个主要是为了避免vue自带的css控制动画影响 )
+( 提示3：通过切换v-show="changeShow"的显示或隐藏才能去触发以上内容 )
+
+
+(1)---统一设置：使用自定义标签transition包住视图，然后设置统一的css
+[注意1]：一个transition里面只能包含一个router-view视图，如果有多个视图，需要多个transition包含
+<transition name="tran" mode="out-in">
+      <router-view></router-view>
+</transition>
+
+[注意2]：可以使用transition-group标签去包含多个组件视图，但每个视图的key值必须不一样,并且默认渲染为span元素，通过tag去改变
+<transition-group tag="div" name="tran" mode="out-in">
+      <router-view key="0"></router-view>
+      <router-view key="1"></router-view>
+</transition-group>
+
+
+/*路由切换动画效果*/
+  .tran-enter{
+    transform: translateX(100%);	// 初始位置可以省略不写，默认为0
+  }
+  .tran-enter-active,.tran-leave-active{
+    transition: 1s;
+  }
+  .tran-enter-to{
+    transform: translateX(0);
+  }
+
+  .tran-leave{
+    transform: translateX(0);	// 初始位置可以省略不写，默认为0
+  }
+  .tran-leave-to{
+    transform: translateX(-100%);
+  }
+/*end动画效果*/
+
+(2)---路由元信息配置: 比如某些页面需要登录才可以访问
+1---在路由配置中meta可以配置一些数据，用在路由信息对象中
+2---访问meta中数据：$route.meta 或者访问 $route函数里面to和from目标路由里面的meta(to.meta)
+3---如果有子默认路由，要将meta设置在默认子路由上
+
+[实例]：路由过渡效果translateX，更具路由下标值实现左右切换
+
+// 在index.js里面配置meta属性
+routes: [
+    {
+      path: '/home',
+      name: 'Home',
+      meta:{ index:1 },
+      component: home
+    },
+....
+
+// 在App.vue视图页面去配置
+<transition :name="names" mode="out-in">
+      <router-view></router-view>
+</transition>
+
+<script>
+export default {
+  name: 'app',
+  watch:{
+      $route(to,from){
+          //console.log(to.meta.index)       // 目标导航的下标
+          //console.log(from.meta.index)     // 离开导航的下标
+          if( to.meta.index < from.meta.index ){
+              this.names='right';
+          }else{
+              this.names='left';
+          }
+      }
+  },
+  data(){
+      return {
+          index: '/home',
+          names: 'left'
+      }
+  }
+}
+</script>
+
+
+[实例9]：编程式导航
+借助于router的实例方法，通过编写代码来实现导航的切换
+1---back：回退一步
+2---forward：前进一步
+3---go：指定前进的回退步数
+4---push：导航到不同的url，向history栈中添加一个新的记录
+5---replace：导航到不同的url，替换history栈中的一个记录
+
+(1)实例1：
+<input type="button" value="后退一步" @click="backHandle">
+<input type="button" value="前进一步" @click="forwardHandle">
+
+methods: {
+    backHandle(){          // 后退一步
+      this.$router.back()
+    },
+    forwardHandle(){     // 前进一步
+      this.$router.forward()
+    },
+    godHandle(){             // 控制前进/后退步数
+      //this.$router.go(-2)  // 后退指定步数
+      //this.$router.go(2)   // 前进指定步数
+    },
+    pushdHandle(){           // 导航到不同页面push
+      this.$router.push('/home')
+    },
+    replaceHandle(){         // 导航到不同页面replace
+      this.$router.replace('/about')
+    }
+}
+
+
+[实例10]：导航的钩子函数
+导航发生变化时，导航钩子主要用来拦截导航，让它完成跳转或取消
+
+·执行钩子函数的位置
+1---router全局
+2---单个路由中
+3---组件中
+
+·钩子函数有哪些
+1---router全局实例上：beforeEach、afterEach
+2---单个路由中：beforeEnter
+3---组件内的钩子：beforeRouteEnter、beforeRouteUpdate、beforeRouteLeave
+
+·钩子函数参数
+1---to：要进入的目标路由对象(到哪里去)
+2---from：正要离开导航的路由对象(从哪里来)
+3---next：用来决定跳转或取消导航,接收3类参数
+	true:正常执行
+	false:阻止执行
+	函数:函数的第一个参数代表vue实例对象(可以通过它来获取钩子函数外的数据)
+
+
+(1)实例-->全局钩子函数：在index.js里面配置
+var routerHome = new VueRouter({....})
+
+routerHome.beforeEach( (to,from,next)=>{      // 每个导航进入之前的执行函数(比如某些页面需登录后可见)
+  next(true);
+  console.log('我现在准备进入导航页面')
+} )
+
+(实例)：某些页面登陆才可见
+router.beforeEach((to,from,next)=>{
+  if(to.meta.login){
+    next('/login')	// 导航到登陆页面(每个路由页面都挂载一个meta属性)
+  }else{
+    next()
+  }
+})
+
+(实例)：用来统一改变title变化
+routerHome.afterEach( (to,from)=>{            // 每个导航进入之后的执行函数
+  if(to.meta.title){
+      window.document.title = to.meta.title;
+  }else{
+    window.document.title = 'vueCli';
+  }
+} )
+
+
+(2)实例-->单个路由钩子函数(在index.js里面配置)
+
+{
+      path: '/home',
+      name: 'Home',
+      meta:{ index:1,title:'HOME' },
+      component: home,
+      beforeEnter(to,from,next){
+        next(true);
+        console.log('home页面进入前执行函数')
+      }
+}
+
+(3)实例-->组件中钩子函数(在单个组件中配置)
+<script>
+  export default {
+    beforeRouteEnter(to,from,next){
+      next(true);
+      console.log('进入到这个组件之前执行的函数')
+    },
+    beforeRouteUpdate(to,from,next){	
+      next(true);
+      console.log('如果这个组件有二级导航，那么切换二级导航时执行这个函数')
+    },
+    beforeRouteLeave(to,from,next){
+      next(true);	// 如果为false那么这个导航将一直停留在这个页面，无法切换
+      console.log('准备要离开这个组件时执行的函数')
+    }
+  }
+</script>
+
+(4)实例-->所有的钩子函数里面的this指向undefined,解决方法如下
+(注意1：组件中的路由钩子函数beforeRouteEnter比生命周期钩子函数beforeCreate还要先执行)
+(注意2：执行进入路由之前的钩子函数时，其实这个时候vue还没有初始化，所以this指向undefined)
+
+[解决方案]：
+<script>
+  export default {
+    data(){
+      return {
+          test:'我是构造函数外面的数据'
+      }
+    },
+    beforeRouteEnter(to,from,next){
+      next( (vm)=>{
+        console.log(vm.test)
+      } );
+    },
+    .......
+  }
+</script>
+
+
+【如何编写自己的vue插件】：
+1---在自己创建的js文件里面写js，比如本地存储、轮播图等
+
+let local = {
+	publicData:'我是公共属性',
+	func:function(){
+		alert('我是公共方法')
+	}
+}
+
+export default {
+    install: function(vm){
+        vm.prototype.$local = local;
+    }
+}
+
+2---把自己写的js作为vue的插件，在main.js里面引入和配置这个插件
+import Utile from '这个插件的路径'
+Vue.use(Utile)
+
+3---在其他组件里面用 this.$local可以访问到这local
+<script>
+	export default {
+		created(){
+			this.$local.func()	// 我是公共方法
+		}
+	}
+</script>
+
+
+【使用webpack对vue组件实现懒加载】：
+简介：只有进入该组件之后才开始加载这个组件，不访问就不加载，提高性能，也叫按需加载。
+      把不同路由页面对应的组件分割成不同的代码块，只有当该路由页面被访问的时候才开始加载该组件
+
+[在讲解组件懒加之前先来看下vue中的异步组件]：
+
+[Vue异步组件]：对应组件一开始不会加载，只有条件成立时才加载，比如如下例子（假如有一个组件需要展现在改页面中）
+<template>
+  <div>
+    <public-vue></public-vue>
+  </div>
+</template>
+
+<script>
+import publicVue from '该组件地址'	
+export default {
+  components: {
+    publicVue(resolve){
+      setTimeout(()=>{
+        resolve(publicVue)	// 或者=> resolve( require('该组件地址') )	
+      }, 2000)
+    }
+  }
+}
+</script>
+
+[webpack代码分割功能]：require.ensure(依赖[数组]，回调函数，chunk名字)，webpack利用的是jsonp的原理做的
+
+[综上，二者结合，实现vue的组件懒加载]：在index.js路由配置js文件里面
+
+（使用场景1：每个组件都是单独的js文件加载的）
+1---组件懒加载，以前是这样写的：import About from '路由地址'，现在改写成下面这样，使用方法不变
+2---这样就可以实现，刚开始的时候不加载这个组件，当访问到时才加该组件，由webpcak自动引入
+let 组件名称 = (resolve) => {
+  return require.ensure([], ()=>{
+    resolve(require('路由地址'))
+  })
+}
+[或者也可以写成这种形式]：
+let 组件名称 = () => {
+  return import('路由地址')
+}
+
+
+（使用场景2：有些组件是同一个js文件加载的）
+1---利用的是require.ensure的第三个参数，chunk名称，如果webpcak在这个ensure方法里面发现了chunk名称相同
+    那么webpack会把它们打包成一个js文件并加载
+let 组件名称1 = (resolve) => {
+  return require.ensure([], ()=>{
+    resolve(require('路由地址1'))
+  },'name')
+}
+
+let 组件名称2 = (resolve) => {
+  return require.ensure([], ()=>{
+    resolve(require('路由地址2'))
+  },'name')
+}
+
+
+【部署到服务器，或者本地访问】：在package.json文件里面，执行里面的build参数  
+npm run build
+之后在src根目录下面生成dist文件，这个压缩版本的dist文件里面index.html文件，和一个包含静态文件的static文件（放本地模拟数据的地方）
+
+[本地访问]：
+1---先启动一个服务环境，并根据自己的系统配置一下
+2---配置static路径（生成的index.html文件里面的默认路径为 /static），需要在config文件下面的index.js文件里面配置assetsPublicPath参数，
+    把这个值变成线上或本地的地址即可，然后使用npm run build 去打包一下
+3---把这个打包后的dist文件复制到服务器环境下面
+4---可能还需要去配置些别的，具体看官网，或者百度
+4---使用服务器端口去访问比如：http://localhost:8080/dist
+
+
+
+--------------------------------------------------------------------------【Vuex】------------------------------------------------------------------------------------------------
+1---Vuex是什么？
+·专为Vue.js应用程序开发的“状态管理模式”
+·采用集中式存储管理应用的所有组件的状态
+·以相应的规则保证状态以一种可预测的方式发生变化
+
+2---状态
+·组件内部状态：仅在一个组件内使用的状态(data字段)
+·应用级别状态：多个组件共用的状态
+
+3---什么情况下使用Vuex
+·多个视图依赖于同一个状态
+·来自不同视图的行为需要变更同一状态
+
+4---使用Vuex
+·安装vuex模块：npm install vuex --save
+·作为插件使用：Vue.use(Vuex)
+·定义容器：new Vuex.Store()
+·注入跟实例：{ store }
+
+
+【实例1】:父子级组件之间的模板注入以及如何通信(不使用Vuex)
+1---在components文件夹里面有select.vue显示页面
+2---在components文件夹里面有selectInput.vue和list.vue两个组件页面
+3---在select.vue显示页面导入selectInput.vue和list.vue两个组件页面
+4---selectInput.vue和list.vue两个组件页面如何与父组件select.vue组件通信
+
+[1]:select.vue显示页面
+<template>
+    <div>
+        <select-input></select-input>
+        <list></list>
+    </div>
+</template>
+
+<script>
+    import selectInput from '@/components/selectInput'
+    import list from '@/components/list'
+
+    export default {
+        data(){
+          return {
+              listShow:false
+          }
+        },
+        components:{
+            selectInput,
+            list
+        }
+    }
+</script>
+
+[2]:selectInput.vue组件页面
+<template>
+    <input type="txt" value="我是selectInput组件">
+</template>
+
+<script>
+    export default {
+        
+    }
+</script>
+
+[3]:list.vue组件页面
+<template>
+    <p>我是list组件</p>
+</template>
+
+<script>
+    export default {
+        
+    }
+</script>
+
+[4]:子组件与父组件的通信
+·:select.vue显示页面(父组件)
+<template>
+    <div>
+        <select-input :is-show.sync="listShow"></select-input>
+        <list></list>
+    </div>
+</template>
+
+<script>
+    import selectInput from '@/components/selectInput'
+    import list from '@/components/list'
+
+    export default {
+        data(){
+          return {
+              listShow:false
+          }
+        },
+        components:{
+            selectInput,
+            list
+        }
+    }
+</script>
+
+·selectInput.vue页面(子组件)
+<template>
+    <input type="txt" value="我是selectInput组件" @click="showList">
+</template>
+
+<script>
+    export default {
+        methods:{
+            showList(){
+                this.$emit('update:isShow',true)	// 改变父组件自定义属性is-show绑定的listShow值
+            }
+        }
+    }
+</script>
+
+
+【实例2】:通过“实例1”用传统组件之间的通信写一个select模板(不使用Vuex)
+[1]:select.vue显示页面
+<template>
+    <div class="wrap">
+        <div class="searchIpt clearFix">
+            <select-input :is-show.sync="listShow" :valueTitle="title"></select-input>
+            <list :dataList="datas" v-show="listShow" @chanage-value="chanageValue"></list>
+        </div>
+    </div>
+</template>
+
+<script>
+    import selectInput from '@/components/selectInput'
+    import list from '@/components/list'
+
+    let listData = [
+        {
+            title:'javascript'
+        },
+        {
+            title:'html'
+        },
+        {
+            title:'css'
+        },
+        {
+            title:'vue'
+        }
+    ];
+
+    export default {
+        data(){
+          return {
+              datas:listData,
+              title:'123',
+              listShow:false
+          }
+        },
+        methods:{
+            chanageValue(item){
+                this.title = item.title;
+            }
+        },
+        components:{
+            selectInput,
+            list
+        }
+    }
+</script>
+
+[2]:selectInput.vue组件页面
+<template>
+    <div class="clearFix">
+        <input type="text" class="keyWord" :value="valueTitle" @focus="showList" @blur="hiddleList">
+        <input type="button" value="查询">
+        <span></span>
+    </div>
+</template>
+
+<script>
+    export default {
+        props:['isShow','valueTitle'],
+        methods:{
+            showList(){
+                this.$emit('update:isShow',true)
+            },
+            hiddleList(){
+                this.$emit('update:isShow',false)
+            }
+        }
+    }
+</script>
+
+[3]:list.vue组件页面
+<template>
+    <ul class="list">
+        <li v-for="item in dataList" @mousedown="changeTitle(item)">{{ item.title }}</li>
+    </ul>
+</template>
+
+<script>
+    export default {
+        props:['dataList'],
+        methods:{
+            changeTitle(item){
+                this.$emit('chanage-value',item)
+            }
+        }
+    }
+</script>
+
+
+
+【实例3】:如何使用Vuex
+1---安装vuex模块：npm install --save vuex
+2---作为插件使用：Vue.use(Vuex)
+3---定义容器：new Vuex.Store()
+4---注入根实例（main.js）：{ store }
+
+【实例4】：Vuex的辅助函数
+1---mapState		// 获取state里面的数据
+2---mapGetters		// getters里面的函数	
+3---mapMutations	// 获取mutations里面的数据
+4---mapActions		// 获取actions里面的数据
+（在组件里面的引入方式：import {辅助函数名} from 'vuex'）
+
+[实例]：在store的index.js里面
+import Vue from 'vue'       	// 引入vue
+import Vuex from 'vuex'    	// 引入vuex
+Vue.use(Vuex)               	// vuex作为插件使用
+
+let store = new Vuex.Store({	// 定义一个容器
+    state:{
+    	count:'我是数据'
+    },
+    getters:{
+	filterNum(state){
+            .....
+        }
+    },
+    mutations:{
+    	func1(state,payload){
+    		console.log('执行函数1')
+    	},
+	func2(state,payload){
+    		console.log('执行函数2 其中参数为payload，这个参数需要组件去传递，下面的{num:5}就是这个参数')
+    	}
+    },
+    actions: {        
+        func111(context){
+            setTimeout( ()=> {  	// 改变状态，提交mutations
+                context.commit('func1')
+            } ,1000)
+        }
+    }    
+})
+export default store;			// 吐出store接口
+
+
+[实例]：在其他组件页面
+<template>
+    <div @click="eventFn1({num:5})">{{count}}</div>
+</template>
+
+<script>
+	import {mapState,mapMutations,mapActions,mapGetters} from 'vuex'
+	
+	computed:{
+		...mapState(['count']),
+		...mapGetters(['filterNum'])
+	},
+	methods:{
+		...mapMutations({
+			eventFn1:'func1',
+			eventFn2:'func2'
+		}),
+		...mapActions({
+			.......
+		})
+	}
+	
+</script>
+
+
+=====>实例1：简易加减法数据交互(使用Vuex)
+[1]：在src目录下单独创建一个文件夹，在文件夹里面创建index.js文件，写入如下代码
+import Vue from 'vue'       // 引入vue
+import Vuex from 'vuex'     // 引入vuex
+
+Vue.use(Vuex)               // vuex作为插件使用
+
+// 定义一个容器
+let store = new Vuex.Store({
+    state: {        // 一个页面中只有一个store; 它里面的数据是同步的
+        count: 100
+    },
+    getters:{	    // 也可以单例出一个处理state里面数据的一个特定getters方法
+        filterNum(state){
+            return state.count>=120 ? 120 : state.count;
+        }
+    },
+    mutations: {    // 作为store属性的回调函数，可以改变store里面的数据(注意mutations它是专为同步操作的)
+        addNum(state,payload){
+            state.count+=payload.n;
+        },
+        removeNum(state,payload){
+            state.count-=payload.n;
+        }
+    },
+    actions: {         		//(注意actions它是专为异步操作的,也就是和后端交互数据时使用的)
+        addAction(context){	// context为一个新的对象，比是vuex实例，只是它里面包含了一些实例的方法而已
+            setTimeout( ()=> {  // 改变状态，提交mutations
+                context.commit('addNum',{
+                    n:2
+                })
+                context.dispatch('textAction','我是数据1')   // 触发actions里面的其他函数
+            } ,1000)
+        },
+        removeAction(context){
+            setTimeout( ()=> {  // 改变状态，提交mutations
+                context.commit('removeNum',{
+                    n:4
+                })
+                context.dispatch('textAction','我是数据2')
+            } ,1000)
+        },
+        textAction(context,obj){	// 这个函数是在addAction和removeAction请求完成后触发的
+            console.log(obj)
+        }
+    }
+})
+
+export default store;		// 吐出store接口
+
+
+[2]：在min.js里面写入
+import store from '@/store/index'	// 引入store接口
+......
+// 启动Vue
+new Vue({
+    el: '#app',
+    store: store,			// 注入store
+    template: '<App />',
+    components: {App}
+})
+
+[3]：在components里面的新建文件比如 incre.vue里面去获取count: 100这个数据
+<template>
+    <div class="increment">
+        <h2>简易加减法计算器</h2>
+        <div>
+            <button type="button" @click="addHandler">+</button>
+            <span>{{num}}</span>
+            <button type="button" @click="removeHandler">-</button>
+        </div>
+        <p>{{ num2 }}</p>
+    </div>
+</template>
+
+<script>
+    export default {
+        computed: {
+            num(){
+                return this.$store.state.count;  // $store是你注入到main.js里面的值
+            },
+            num2(){
+                return this.$store.getters.filterNum;
+            }
+        },
+        methods: {
+            addHandler(){
+                // 点击 + 提交mutations里面的方法，同时传人对象参数(同步操作使用这个)
+                this.$store.commit('addNum',{
+                    n:2
+                })
+                // 异步操作使用这个
+                this.$store.dispatch('addAction')
+            },
+            removeHandler(){
+                // 点击 - 提交mutations里面的方法，同时传人对象参数(同步操作使用这个)
+                this.$store.commit('removeNum',{
+                    n:4
+                })
+                // 异步操作使用这个
+                this.$store.dispatch('removeAction')
+            }
+        }
+    }
+</script>
+
+
+====》[实例2]:通过“实例1”用Vuex写一个select模板
+
+[1]：在src目录下单独创建一个文件夹，在文件夹里面创建index.js文件，把所有的通信数据和逻辑写在里面
+import Vue from 'vue'        // 引入vue
+import Vuex from 'vuex'     // 引入vuex
+
+Vue.use(Vuex)               // vuex作为插件使用
+
+let listData = [	    // 渲染ul列表的数据
+    {
+        title:'javascript'
+    },
+    {
+        title:'html'
+    }
+];
+
+let store = new Vuex.Store({
+    state:{
+        listShow:false,
+        vuexTitle:'',
+        datas:listData
+    },
+    mutations:{
+        changeTrue(state){
+            state.listShow = true;
+        },
+        changeFalse(state){
+            state.listShow = false;
+        },
+        changeTitle(state,pay){
+            state.vuexTitle = pay.title;
+        }
+    }
+})
+
+export default store;
+
+[2]：在min.js里面引入store接口
+import store from '@/store/index'	// 引入store接口
+......
+// 启动Vue
+new Vue({
+    el: '#app',
+    store: store,			// 注入store
+    template: '<App />',
+    components: {App}
+})
+
+[3]:select.vue显示页面
+<template>
+    <div class="wrap">
+        <div class="searchIpt clearFix">
+            <select-input></select-input>
+            <list v-show="listShow"></list>
+        </div>
+    </div>
+</template>
+
+<script>
+    import selectInput from '@/components/selectInput'
+    import list from '@/components/list'
+    import {mapState, mapMutations, mapActions, mapGetters} from 'vuex'
+
+    export default {
+        components:{
+            selectInput,
+            list
+        },
+        computed:{		// 获取vuex里面的listShow数据
+	    ...mapState(['listShow'])
+        }
+    }
+</script>
+
+[4]:selectInput.vue组件页面
+<template>
+    <div class="clearFix">
+        <input type="text" class="keyWord" :value="vuexValue" @focus="showList" @blur="hiddleList">
+        <input type="button" value="查询">
+        <span></span>
+    </div>
+</template>
+
+<script>
+    import {mapState, mapMutations} from 'vuex'
+
+    export default {
+        methods:{		// 改变vuex里面的listShow数据
+	    ...mapMutations({
+		showList: 'changeTrue',
+		hiddleList: 'changeFalse'
+	    })
+        },
+        computed:{		// 获取vuex里面的vuexTitle数据
+            ...mapState(['vuexTitle'])
+        }
+    }
+</script>
+
+[5]:list.vue组件页面
+<template>
+    <ul class="list">
+        <li v-for="item in dataList" @mousedown="changeTitle({title:item.title})">{{ item.title }}</li>
+    </ul>
+</template>
+
+<script>
+    import {mapState, mapMutations} from 'vuex'
+
+    export default {
+        computed:{		// 获取vuex里面的datas数据
+          dataList(){
+              return this.$store.state.datas;
+          }
+        },		
+        methods:{		// 改变vuex里面的vuexTitle数据
+            changeTitle(title){
+                this.$store.commit('changeTitle',title);
+            }
+	    ...mapMutations({
+		changeTitle: 'changeTitle'
+	    })
+        }
+    }
+</script>
+
+
+====》[实例3]:通过“实例2”安装ajax请求模块去改写list.vue里面的页面
+1---安装axios：npm install --save axios
+2---在Vuex的index.js页面里面引入axios：import axios from 'axios'
+3---在Vuex的index.js页面里面使用actions获取数据
+mutations:{
+    .....
+    // 要改变state里面的数据都必须使用mutations里面的方法，不能直接改变state里面的数据
+    changeDatas(state,list){    
+        state.datas = list;
+    }
+},
+actions:{
+    getList({commit}){
+        axios.get('后台数据地址url')
+        .then( (data)=>{    // 请求成功
+            commit('changeDatas',data.data)	// 触发mutations里面的changeDatas函数
+        } )
+        .catch( (error)=>{  // 请求失败
+            console.log(error)
+        } )
+    }
+}
+
+4---在list.vue页面里面使用created去执行getList函数渲染页面
+.....
+created(){
+     this.$store.dispatch('getList')
+}
+
+
+【实例5】：Vuex的模块管理
+当你的组件模块有很多时，你在Vuex的index.js页面里面就会有很多不同组件的数据，当组件比较多时，数据和各种方法就会很多，
+都放在state和mutations等里面的话，不容易区分，这个时候就要进行模块管理
+
+1---在Vuex的index.js页面里面分离模块
+let model1 = {
+    state:{
+        title:'数据1'
+    },
+    mutations:{
+	....
+    },
+    actions(){
+	....
+    }
+};
+
+let model2 = {
+    state:{
+        title:'数据2'
+    },
+    mutations:{
+	....
+    },
+    actions(){
+	....
+    }
+};
+
+let store = new Vuex.Store({
+    modules:{
+        model,
+        mode2
+    }
+})
+
+2---在其他组件里面获取model1或者model2里面的数据和方法(在state前面加上模块名称即可)
+this.$store.state.model1.title;
+this.$store.state.model2.title;
+// 或者使用辅助函数也可以
+computed: {
+	...mapState({
+		dataList: state => state.model1.dataList
+	})
+}
+
+(提示：不过注意，在this.$store.commit和this.$store.dispatch方法下面不用加模块名字，正常使用即可)
+
+
+----------------------------------------------------------------axios通信服务-----------------------------------------------------------------------
+
+【axios通信服务】：
+简介：基于Promise用于浏览器和nodejs的与服务端通信的一个ajax库
+
+特征：
+	支持Promise API
+	拦截请求和响应
+	转换请求和响应数据
+	取消请求
+	自动转换JSON数据
+
+使用：
+	CDN地址(远程js文件)：https://unpkg.com/axios@0.16.2/dist/axios.min.js
+	安装：npm install --save axios
+	导入Vue组件中：import axios from 'axios'
+
+语法：
+	axios(config)
+	axios[method]()
+	返回值为promise
+
+支持的请求方式：
+        <!--以下2种请求方式后端无需配置就能用-->
+	axios.get(url[,config])
+	axios.post(url[,data[,config]])
+
+	<!--以下5种请求方式都需要后端去做支持配置才能用-->
+	axios.delete(url,[,config])
+	axios.head(url,[,config])
+	axios.options(url,[,config])
+	axios.put(url,[,data[,config]])
+	axios.patch(url[,data[,config]])
+
+mock模拟后端数据API：http://easy-mock.com/
+
+
+[实例1]：默认请求-->在各组件页面中使用created钩子函数去请求数据
+<script>
+    import axios from 'axios'
+
+    export default {
+        created(){
+            axios({
+                method:'get',
+                url:'请求地址'
+            })
+            .then( (data)=>{
+                console.log(data.data)
+            } )
+            .catch( (error)=>{
+                console.log(error)
+            } )
+        }
+    }
+</script>
+
+[实例2]：get和post请求-->在各组件页面中使用created钩子函数去请求数据
+<script>
+    import axios from 'axios'
+
+    export default {
+        created(){
+            axios.get('请求地址')
+                .then( (data)=>{
+                    console.log(data.data)
+                } )
+                .catch( (error)=>{
+                    console.log(error)
+                } )
+        }
+    }
+</script>
+
+
+[实例3]：使用get去发送数据(使用get的第二个参数)
+created(){
+    axios.get('http://easy-mock.com/mock/596aca7ea1d30433d8342fcc/example/vaxioslist',{
+        params:{
+            abc:'我是发送到后台的get数据'
+        }
+    })
+        .then( (data)=>{
+            console.log(data.data)
+        } )
+        .catch( (error)=>{
+            console.log(error)
+        } )
+}
+
+[实例4]：使用post去发送数据(使用get的第二个参数)
+created(){
+    axios.post('http://easy-mock.com/mock/596aca7ea1d30433d8342fcc/example/vxios-post',{
+       abc:'我是发送到后台的post数据'
+    })
+        .then( (data)=>{
+            console.log(data.data)
+        } )
+        .catch( (error)=>{
+            console.log(error)
+        } )
+}
+
+
+[实例5]：自定义请求实例
+<template>
+    <div class="axios-wrap">
+        <h2>学习axios</h2>
+        <p>{{ list }}</p>
+        <button type="button" @click="cancelFn">点击取消请求</button>
+    </div>
+</template>
+
+<script>
+    import axios from 'axios'		    // 引入axios模块
+    import queryString from 'queryString'   // 专门为transformRequest函数服务的
+
+    // 创建用户主动取消ajax请求数据的令牌，比如请求时间过长等原因
+    var CancelToken = axios.CancelToken;
+    var source = CancelToken.source();
+
+    // 自定义配置项
+    let HTTP = axios.create({
+        baseURL:'http://xxxxxx/xxxx/',   // 请求地址里面相同字符串
+        timeout:5000,           	 // 设置请求超时时间，超过这个时间将不在发送请求
+        responseType:'json',    	 // 拿到数据后解析成json格式
+        params:{                	 // 查询字符串 url...?books=share
+            books:'share'
+        },
+        headers:{              	 	 // 设置请求头信息，后台可以拿到这个数据(不能用中文)
+            'custome-head':'YQH',	 // 请求头信息设置为'YQH '
+            'content-type':'application/x-www-form-urlencoded'	// 希望发送的数据格式为key=value&key=value （默认用&符号链接）
+        },
+        transformRequest:[function(data){       // 发送数据时进行格式化
+            return queryString.stringify(data)
+        }],
+        transformResponse:[function(data){      // 对请求回来的数据做处理的函数
+            data.abc='YQH';                     // 比如向请求回来的数据中添加abc数据
+            return data;
+        }],
+        validateStatus:function(status){        // 验证我的状态码在什么范围内成功或失败
+            return status < 400;
+        },
+        cancelToken:source.token                 // 配置用户主动取消ajax请求数据的令牌
+    })
+
+    export default {
+        data(){
+            return {
+                list:'123'
+            }
+        },
+        methods:{
+            cancelFn(){
+                source.cancel('用户主动取消了请求，触发catch请求失败函数')
+            }
+        },
+        created(){
+            HTTP.post('vxios-post',{
+                name:'xiaoming',
+                age:'20'
+            })
+                .then( (data)=>{
+                    this.list = data.data.title
+                } )
+                .catch( (error)=>{
+                    // 检测请求失败是用户主动取消的还是系统错误
+                    if( axios.isCancel(error) ){
+                        console.log('请求被用户主动取消了')
+                    }else{
+                        console.log(error)
+                    }
+                } )
+        }
+    }
+</script>
+
+
+
+[实例6]：自定义请求实例-->同时发送多个请求，并获取多组数据
+
+<template>
+    <div class="axios-wrap">
+        <h2>学习axios</h2>
+        <p>{{ list }}</p>
+    </div>
+</template>
+
+<script>
+    import axios from 'axios'
+    import queryString from 'queryString'   // 为transformRequest函数服务的
+
+    // 创建用户主动取消ajax请求数据的令牌，比如请求时间过长等原因
+    var CancelToken = axios.CancelToken;
+    var source = CancelToken.source();
+
+    // 自定义配置项
+    let HTTP = axios.create({
+        baseURL:'http://easy-mock.com/mock/596aca7ea1d30433d8342fcc/example/',   // 请求地址相同字符串
+        timeout:5000,           // 设置请求超时时间，超过这个时间将不在发送请求
+        responseType:'json',    // 拿到数据后解析成json格式
+        params:{                // 查询字符串 url...?books=share
+            books:'share'
+        },
+        validateStatus:function(status){        // 验证我的状态码在什么范围内成功或失败
+            return status < 400;
+        },
+        cancelToken:source.token                 // 配置用户主动取消ajax请求数据的令牌
+    })
+
+    export default {
+        data(){
+            return {
+                list:'默认数据'
+            }
+        },
+        methods:{
+            cancelFn(){
+                source.cancel('用户主动取消了请求，触发catch请求失败函数')
+            }
+        },
+        created(){
+            function http1(){
+                return HTTP.get('vaxioslist')
+            }
+            function http2(){
+                return HTTP.post('vxios-post')
+            }
+            axios.all( [http1(),http2()] )
+                .then(axios.spread((res1,res2)=>{
+                    console.log(res1.data)      // 请求到的第一组数据
+                    console.log(res2.data)      // 请求到的第二组数据
+                } ))
+                .catch( (error)=>{
+                    // 检测请求失败是用户主动取消的还是系统错误
+                    if( axios.isCancel(error) ){
+                        console.log('请求被用户主动取消了')
+                    }else{
+                        console.log(error)
+                    }
+                } )
+        }
+    }
+</script>
+
+
+
+[实例7]：拦截器-->拦截请求
+
+1---全局拦截
+import axios from 'axios'
+import queryString from 'queryString'   // 为transformRequest函数服务的
+
+// 创建用户主动取消ajax请求数据的令牌，比如请求时间过长等原因
+var CancelToken = axios.CancelToken;
+var source = CancelToken.source();
+
+// 自定义配置项
+let HTTP = {.....}
+
+// 请求之前的拦截
+HTTP.interceptors.request.use( function(config){
+    // 在请求发送之前做处理；只有return config 请求才能成功，否则不会发送请求
+    return config;
+},function(error){
+    // 在请求发送错误时做处理
+    return Promise.reject(error)
+} )
+
+// 请求之后的拦截(这里面就是对数据做操作的地方)
+HTTP.interceptors.response.use( function(data){
+    console.log('拦截成功，并对数据做处理')
+    return data;
+} )
+
+
+
+--------------------------------------------------------vue-resource通信服务---------------------------------------------------------------
+【简介】：异步请求插件
+
+【安装项目依赖】：npm install vue-resource --save
+
+【使用方式】：提供了7钟API
+
+【调用方法】：this.$http.get(url, [options])	、this.$http.post(url, [options]) 等
+
+【巧用】：可以通过http属性中的root去配置请求地址的公共部分
+export default {
+	http:{
+		root:'请求地址公共路径部分'
+	}
+}
+
+-----------------------------------------------------------vue插件：UI组件（vux）-----------------------------------------------------
+【介绍】：提供众多移动端UI组件，比如幻灯片、按钮、图文列表等
+
+1---安装vue-cli：npm install -g vue-cli 
+2---安装vuex：npm install -S vux 
+(vux官网PAI：https://vux.li)
+(vue组件库：https://github.com/opendigg/awesome-github-vue)
+3---安装less：npm install -D less less-loader
+4---语言包配置：解决$t报错
+（·）安装npm install vux-loader --save-dev
+（·）在build/webpack.dev.conf.js中配置
+	var vuxLoader = require('vux-loader')
+	baseWebpackConfig = vuxLoader.merge(baseWebpackConfig, {
+  		plugins: ['vux-ui']
+	})
+
+5---使用vux组件（布局以ViewBox为列，然后看它的API文档即可）
+html：<view-box>其他vux组件都可以放在里面</view-box> 
+script：引人组件：import { ViewBox } from 'vux'
+script：导入组件：export default {
+			components:{
+				ViewBox
+			}
+		｝
+css：
+<style lang="less">
+	@import '~vux/src/styles/reset.less';
+	html, body {
+	    height: 100%;
+	    width: 100%;
+	    overflow-x: hidden;
+	}
+</style>
+（记得在index.html的head里面设置<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">）
+
+[实例1]：解决vux的组件和你或者其他插件组件重名的问题
+<script>
+	import { Scroller as sc } from 'vux'
+	export default {
+		name:'app',
+		components:{
+			sc
+		}
+	}  
+</script>
+(这样原来在html里面的scroller组件就可以用sc代替了)
+
+[实例2]：在App.vue里面
+<template>
+  <div id="app">
+  	<view-box> 
+		<x-header class="xheader"
+			title="标题" 
+			:left-options="{
+				showBack: false,
+				backText:'back'
+			}"
+			:right-options="{
+				showMore:true
+			}"
+		>
+		</x-header>
+
+		<scroller class="xscroller" lock-y :scrollbar-x=false>
+			<div style="width: 100%;overflow:scroll;-webkit-overflow-scrolling:touch;">
+				<tab>
+			      	<tab-item selected>最新</tab-item>
+			      	<tab-item>推荐</tab-item>
+			      	<tab-item>视频</tab-item>
+			      	<tab-item>游戏</tab-item>
+			    </tab>
+			</div>
+		</scroller>
+
+		<router-view></router-view>
+
+		<tabbar slot="bottom">
+	      		<tabbar-item>
+				<img slot="icon" src="./assets/logo.png">
+        				<span slot="label">Wechat</span>
+	      		</tabbar-item>
+			。。。。。。。。
+		</tabbar>
+  	</view-box>
+  </div>
+</template>
+
+<script>
+	import { ViewBox,XHeader,Tabbar,TabbarItem,Tab,TabItem,Scroller,Swiper } from 'vux'
+
+	export default {
+		name:'app',
+		components:{
+			ViewBox,
+			XHeader,
+			Tabbar, 
+			TabbarItem,
+			Tab, 
+			TabItem,
+			Scroller,
+			Swiper
+		},
+		data(){
+			return {
+				swiperList:[]
+			}
+		}
+	}  
+</script>
+
+<style lang="less">
+	@import '~vux/src/styles/reset.less';
+
+	html, body {
+	    height: 100%;
+	    width: 100%;
+	    overflow-x: hidden;
+	}
+	#app{
+		height: 100%;
+	}
+</style>
+
+-----------------------------------------------------------------------------------end vue插件--------------------------------------------------------------------------------------------------
+
+
+-----------------------------------------------------------------------------------vue插件：vue-scroller-------------------------------------------------------------------------------------------
+【介绍】：自定义滚动条刷新加载组件，比如上拉刷新、下拉加载等
+【API】：https://www.npmjs.com/package/vue-scroller
+
+1---安装：npm install vue-scroller -S
+2---在main.js里面导入：
+import VueScroller from 'vue-scroller'
+Vue.use(VueScroller)
+
+3---在组件中使用scroller组件，并进行配置
+<template>
+	<scroller :on-refresh="refresh" :on-infinite="infinite" ref="myRef" refreshText="刷新数据">
+		内容区域
+	</scroller>
+</template>
+
+<script>
+	export default {
+		methods:{
+			refresh(){		// 下拉刷新
+				setTimeout(item=>{
+					
+				},1000)
+			},
+			infinite(){		// 上拉加载
+				setTimeout(item=>{
+					
+				},1000)
+			}
+		}
+	}  
+</script>
+
+
+【完整实例】：网易163新闻列表
+
+1---main.js配置
+import Vue from 'vue'
+import App from './App'
+import router from './router'
+import VueJsonp from 'vue-jsonp'
+import VueScroller from 'vue-scroller'
+import  { ToastPlugin } from 'vux'
+
+Vue.use(VueJsonp)
+Vue.use(VueScroller)
+Vue.use(ToastPlugin)
+
+Vue.config.productionTip = false
+
+/* eslint-disable no-new */
+new Vue({
+  el: '#app',
+  router,
+  template: '<App/>',
+  components: { App }
+})
+
+2--App.vue配置
+<template>
+  <div id="app">
+  	<view-box> 
+
+		<x-header class="xheader"
+			title="标题" 
+			:left-options="{
+				showBack: false,
+				backText:'back'
+			}"
+			:right-options="{
+				showMore:true
+			}"
+		>
+			<div slot="left">返回</div>
+		</x-header>
+		<sc class="xscroller" lock-y :scrollbar-x=false>
+			<div style="width: 100%;overflow:scroll;-webkit-overflow-scrolling:touch;">
+				<tab>
+			      	<tab-item selected>最新</tab-item>
+			      	<tab-item>推荐</tab-item>
+			      	<tab-item>视频</tab-item>
+			      	<tab-item>游戏</tab-item>
+			    </tab>
+			</div>
+		</sc>
+
+		<!--上拉加载-->
+		<router-view></router-view>
+		<!--下拉刷新-->
+
+		<tabbar slot="bottom">
+	      	<tabbar-item>
+				<img slot="icon" src="./assets/logo.png">
+        		<span slot="label">Wechat</span>
+	      	</tabbar-item>
+	      	<tabbar-item>
+				<img slot="icon" src="./assets/logo.png">
+        		<span slot="label">Wechat</span>
+	      	</tabbar-item>
+	      	<tabbar-item>
+				<img slot="icon" src="./assets/logo.png">
+        		<span slot="label">Wechat</span>
+	      	</tabbar-item>
+		</tabbar>
+
+  	</view-box>
+  </div>
+</template>
+
+<script>
+	import { ViewBox,XHeader,Tabbar,TabbarItem,Tab,TabItem,Scroller as sc,Swiper } from 'vux'
+
+	export default {
+		name:'app',
+		components:{
+			ViewBox,
+			XHeader,
+			Tabbar, 
+			TabbarItem,
+			Tab, 
+			TabItem,
+			sc,
+			Swiper
+		}
+	}  
+</script>
+
+<style lang="less">
+	@import '~vux/src/styles/reset.less';
+
+	html, body {
+	    height: 100%;
+	    width: 100%;
+	    overflow-x: hidden;
+	}
+	#app{
+		height: 100%;
+		.xheader{
+			position: fixed;
+			left: 0;
+			top: 0;
+			width: 100%;
+			z-index: 100;
+		}
+		.xscroller{
+			margin-top: 46px;
+		}
+		.loading-layer{
+			padding-bottom: 90px;
+		}
+		._v-container{
+			top: 90px !important;		
+		}
+	}
+	
+</style>
+
+
+3---自己的路由页面配置
+<template>
+<div>
+  	<scroller :on-refresh="refresh" :on-infinite="infinite" ref="myRef" refreshText="刷新数据">
+	    <swiper auto :list="swiperList" :loop="true"></swiper>
+	    <marquee :interval="3000">
+	      	<marquee-item v-for="(item,index) in news" :key="index" class="align-middle"><a :href="item.url">{{item.title}}</a></marquee-item>
+	    </marquee>
+	    <!--下拉刷新数据-->
+	    <panel class="panel" :list="datalList"></panel>
+	    <!--上拉加载数据-->
+	    <panel class="panel" :list="moreDataList"></panel>
+	</scroller>
+</div>
+</template>
+
+<script>
+	import { Scroller as scc,Swiper,Marquee,MarqueeItem,Panel } from 'vux'
+
+	var start = 0;
+	var end = start+9;
+	var initLoaded = false;	// 初始化数据是否加载完成
+	export default {
+		components:{
+			scc,
+			Swiper,
+			Marquee, 
+			MarqueeItem,
+			Panel
+		},
+		data(){
+			return {
+				swiperList:[],
+				news:[],
+				datalList:[],
+				moreDataList:[],	// 存储上拉加载得到的数据
+				key:0,		// 存储下拉刷新
+				refreshKey:['A','B01','B02','B03','B04','B05','B06','B07','B08','B09','B010'],	// 存储下拉刷新
+				keyList:0,		// 存储上拉加载
+				refreshKeyList:['A','B01','B02','B03','B04','B05','B06','B07','B08','B09','B010']	// 存储上拉加载
+			}
+		},
+		created(){
+			this.$jsonp('http://3g.163.com/touch/jsonp/sy/recommend/0-9.html')
+			.then( data=>{
+				// 幻灯片数据
+				this.swiperList = data.focus.filter( item=>{
+					return item.addata === null;
+				} ).map( item=>{
+					return {
+						url:item.link,
+						img:item.picInfo[0].url,
+						title:item.title
+					}
+				} )
+
+				// 滚动新闻列表
+				this.news = data.live.filter( item=>{
+					return item.addata === null;
+				} ).map( item=>{
+					return {
+						url:item.link,
+						title:item.title
+					}
+				} )
+
+				// 首屏列表数据
+				this.datalList = data.list.filter( item=>{
+					return item.addata === null;
+				} ).map( item=>{
+					return {
+						src:item.picInfo[0].url,
+						title:item.source,
+						desc:item.title,
+						url:item.link
+					}
+				} )
+
+				initLoaded = true;
+			} )
+		},
+		methods:{
+			refresh(){		// 下拉刷新
+				setTimeout(item=>{
+					this.key++;
+					if(this.key>this.refreshKey.length){
+						this.key = 0;
+					}
+					this.$jsonp('http://3g.163.com/touch/jsonp/sy/recommend/0-9.html',{
+						miss:'00',
+						refresh:this.refreshKey[this.key]
+					})
+					.then( data=>{
+						this.datalList = data.list.filter( item=>{
+							return item.addata === null && item.picInfo[0];
+						} ).map( item=>{
+							return {
+								src:item.picInfo[0].url,
+								title:item.source,
+								desc:item.title,
+								url:item.link
+							}
+						} )
+						// this.$refs.myRef获取插件scroller的实例对象
+						var dataLength = this.datalList.length;
+						this.$refs.myRef.finishPullToRefresh();
+						this.$vux.toast.text(`共加载了${dataLength}条数据`, 'top');
+					})
+				},1000)
+			},
+			infinite(){		// 上拉加载
+				if(!initLoaded){
+					this.$refs.myRef.finishInfinite();
+					return;
+				}
+				setTimeout(item=>{
+					this.keyList++;
+					if(this.keyList>=this.refreshKeyList.length){
+						this.keyList = 0;
+					}
+					this.$jsonp(`http://3g.163.com/touch/jsonp/sy/recommend/${start}-${end}.html`,{
+						miss:'00',
+						refresh:this.refreshKeyList[this.keyList]
+					})
+					.then( data=>{
+						// 首屏列表数据
+						var dataS = data.list.filter( item=>{
+							return item.addata === null && item.picInfo[0];
+						} ).map( item=>{
+							return {
+								src:item.picInfo[0].url,
+								title:item.source,
+								desc:item.title,
+								url:item.link
+							}
+						} )
+						this.moreDataList = this.moreDataList.concat(dataS);
+
+						start+=10;
+						end = start+9;
+						this.$refs.myRef.finishInfinite();
+						// this.$refs.myRef获取插件scroller的实例对象
+						var dataLength = this.moreDataList.length;
+						this.$refs.myRef.finishPullToRefresh();
+						this.$vux.toast.text(`共加载了${dataLength}条数据`, 'bottom');
+					})
+				},1000)
+			}
+		}
+	}  
+</script>
+
+<style lang="less">
+	.align-middle {
+		@h:40px;
+		height: @h;
+		padding-left: 12px;
+		font-size: 16px;
+		line-height: @h;
+	}
+	.weui-media-box__hd{
+		width:100px !important;
+		height:78px;
+		margin-top: 0 !important;
+		img{
+			height:100%;
+		}
+	}
+</style>
+
+-----------------------------------------------------------------------------------end --------------------------------------------------------------------------------------------------
+
+----------------------------------------------------------------vue使用自己定义的公共方法和变量 ------------------------------------------------------------------------------------
+
+【1】建立自己的公共方法和变量的文件夹和js文件
+export const A变量 = 'aaa'
+export const B变量 = 'bbb'
+export function A方法(){
+	alert(1)
+}
+export function B方法(){
+	alert(2)
+}
+
+【2】在其他页面使用
+<script>
+	import {A方法，B方法} from '路径'
+	import {A变量，B变量} from '路径'
+	export default {
+		methods:{
+			A方法()
+			B方法()
+		}
+	}
+</script>
+
+-----------------------------------------------------------------------------------end --------------------------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------vue插件(jquery) ---------------------------------------------------------------------------------------
+【1】：本地引用 import jQuery from '地址'
+
+【2】：在export default里面，直接像jquery那样使用 $
+
+----------------------------------------------------------------------end -------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------vue插件(图片懒加载：vue-lazyload) ------------------------------------------------------------------------------------
+【地址】：http://www.8dou5che.com/2017/05/11/vue-lazyload/
+【用法】：图片出现在页面视口时才加载原有图片
+
+1---安装：npm install vue-lazyload
+
+2---man.js里面引入以下代码
+import VueLazyload from 'vue-lazyload'
+Vue.use(VueLazyload, {  
+ error: '图片地址',
+ loading: '图片地址'
+})
+
+3---将img的src或:src改成v-lazy
+......
+<img v-lazy="地图地址或数据">
+......
+
+-----------------------------------------------------------------------------------end --------------------------------------------------------------------------------------------------
+
+
+----------------------------------------------------------------vue插件(better-scroll) ------------------------------------------------------------------------------------
+
+【可控区域上下滚动】
+1---封装scroll组件
+<template>
+  <div ref="wrapper">
+    <slot></slot>
+  </div>
+</template>
+
+<script>
+  // 官网：http://ustbhuangyi.github.io/better-scroll/doc/
+  // 安装：npm install--save better-scroll
+  // 引人：import BScroll from 'better-scroll'
+  import BScroll from 'better-scroll'
+
+  const DIRECTION_H = 'horizontal'
+  const DIRECTION_V = 'vertical'
+
+  export default {
+    props: {
+      probeType: {
+        type: Number,
+        default: 1
+      },
+      click: {
+        type: Boolean,
+        default: true
+      },
+      listenScroll: {
+        type: Boolean,
+        default: false
+      },
+      data: {
+        type: Array,
+        default: null
+      },
+      pullup: {
+        type: Boolean,
+        default: false
+      },
+      beforeScroll: {
+        type: Boolean,
+        default: false
+      },
+      refreshDelay: {
+        type: Number,
+        default: 20
+      },
+      direction: {
+        type: String,
+        default: DIRECTION_V
+      }
+    },
+    mounted() {
+      setTimeout(() => {
+        this._initScroll()
+      }, 20)
+    },
+    methods: {
+      _initScroll() {
+        if (!this.$refs.wrapper) {
+          return
+        }
+        this.scroll = new BScroll(this.$refs.wrapper, {
+          probeType: this.probeType,
+          click: this.click,
+          eventPassthrough: this.direction === DIRECTION_V ? DIRECTION_H : DIRECTION_V
+        })
+
+        if (this.listenScroll) {
+          this.scroll.on('scroll', (pos) => {
+            this.$emit('scroll', pos)
+          })
+        }
+
+        if (this.pullup) {
+          this.scroll.on('scrollEnd', () => {
+            if (this.scroll.y <= (this.scroll.maxScrollY + 50)) {
+              this.$emit('scrollToEnd')
+            }
+          })
+        }
+
+        if (this.beforeScroll) {
+          this.scroll.on('beforeScrollStart', () => {
+            this.$emit('beforeScroll')
+          })
+        }
+      },
+      disable() {
+        this.scroll && this.scroll.disable()
+      },
+      enable() {
+        this.scroll && this.scroll.enable()
+      },
+      refresh() {
+        this.scroll && this.scroll.refresh()
+      },
+      scrollTo() {
+        this.scroll && this.scroll.scrollTo.apply(this.scroll, arguments)
+      },
+      scrollToElement() {
+        this.scroll && this.scroll.scrollToElement.apply(this.scroll, arguments)
+      }
+    },
+    watch: {
+      data() {
+        setTimeout(() => {
+          this.refresh()
+        }, this.refreshDelay)
+      }
+    }
+  }
+</script>
+
+2---其他组件使用
+<template>
+	<scroll :data="数据">内容区域</scroll>
+</template>
+
+
+【描点跳转】: 点击按钮进行better-scroll描点跳转
+<template>
+	<scroll :data="数据" ref="listview">
+		<button @touchstart="onShortcutTouchStart"></button>
+		<div ref="ref="listGroup"></div>
+	</scroll>
+</template>
+
+.......
+methods:{
+  onShortcutTouchStart(event){    
+    var anchorIndex = event.target.getAttribute('dataIndex')		// 点击目标元素的下标
+    this.$refs.listview.scrollToElement(this.$refs.listGroup[anchorIndex],0)	// 让scroll最外层元素里面的目标元素ref="listGroup"进行跳转
+  }
+}
+
+-----------------------------------------------------------------------------------end ----------------------------------------------------------------
+
+----------------------------------------------------------------vue动画(加入购物车Vuex管理)---------------------------------------------------------------------
+【原理】：这里采用vuex去触发小球运动，用js的实现去触发transition动画，并改变小球外框的y轴，和小球的x轴
+
+【1】：vuex定义数据
+let store = new Vuex.Store({
+	state: {
+		ballData: {
+			show: false,	// 小球是否显示
+			ballEl: null	// 点击“加入购物车按钮”
+		}
+	},
+	mutations: {
+		showBall (state) {				// 点击“加入购物车”触发commit
+			state.ballData.show = true		// 显示小球
+			state.ballData.ballEl = event.path[0]	// 获取购物车点击按钮
+		}
+	}
+})
+
+【2】：加入购物车 图标的组件
+<template>
+  <div>
+    <div class="ball-wrap" ref="box">加入购物车</div>
+    <transition name="ballWrap"
+    	:css="true"
+	@before-enter="beforeEnter"
+	@enter="enter"
+	@after-enter="afterEnter"
+    	>
+	<div class="ball" v-show="ballData.show">
+		<i ref="ba"></i>
+	</div>
+    </transition>
+    <button type="button" class="gouwuche" ref="gouwuche" @click="showBallHandle">加入购物车</button>
+  </div>
+</template>
+
+<script>
+	import {mapState, mapMutations} from 'vuex'
+
+    export default {
+    	computed: {
+    		...mapState(['ballData'])
+    	},
+    	methods: {
+    		...mapMutations({
+    			showBallHandle: 'showBall'
+    		}),
+    		beforeEnter (el) {
+    			let Ele = this.ballData.ballEl.getBoundingClientRect()
+    			let box = this.$refs.box.getBoundingClientRect()
+    			let ba = this.$refs.ba
+    			let x = -(box.x - Ele.x)
+    			let y =  Ele.y - box.y
+    			el.style.transform = 'translate3d(0,'+y+'px,0)'	// 改变外框y轴
+    			ba.style.transform = 'translate3d(-'+x+'px,0,0)'// 改变小球x轴
+    		},
+    		enter (el) {
+    			let a = el.offsetHeight
+    			el.a = a
+			// 以上设置是防止vue出错
+			let ba = this.$refs.ba
+
+    			el.style.transform = 'translate3d(0,0,0)'
+    			ba.style.transform = 'translate3d(0,0,0)'
+    		},
+    		afterEnter (el) {
+    			this.ballData.show = false
+    		}
+    	}
+    }
+</script>
+
+<style lang="less">
+	......其他样式省略，小球外框和小球都有定位属性
+	.ballWrap-enter-active {
+		transition: 1s cubic-bezier(.68,1.46,1,1.3);	// 贝塞尔曲线，可自己在网上调节
+	}
+	.ballWrap-enter-active .ba{
+		transition: 1s ;
+	}
+</style>
+
+-----------------------------------------------------------------------end ----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

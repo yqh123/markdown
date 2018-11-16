@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>八皇后</title>
+</head>
+<style>
+	* {margin: 0; padding: 0;}
+	#ul {height: auto; margin: 20px auto; overflow: hidden; border: 1px solid #000; border-right: none; border-bottom: none;}
+	#ul li {float: left; width: 50px; height: 50px; border: 1px solid #000; border-left: none; border-top: none; list-style: none;}
+</style>
+<body>
+<ul id="ul"></ul>	
+
+<script>
+
+var oUl = document.getElementById('ul');
+var aLi = document.getElementsByTagName('li');
+
+var sizeGrid = 50;
+var num = 4;
+var cunt = 0;
+
+init()
+
+// 初始化
+function init() {
+	oUl.style.width = (sizeGrid+1) * num + 'px';
+	creatGrid();
+	setQueen(0);
+	console.log(cunt)
+}
+
+/*
+	创建网格，分配(x,y)坐标
+	排除其他皇后不能在的区域
+		x轴相同的
+		y轴相同的
+		元素x+元素y = x || 元素x-元素y = x
+	回塑算法：如果放置的那个点无法进行到最后一排，那么就返回上一层，直至找到最后每一排都能放置皇后的最佳位置
+*/
+function creatGrid() {
+	var len = num * num;
+
+	for (var i = 0; i < len; i++) {
+		var li = document.createElement('li');
+		oUl.appendChild(li);
+	}
+
+	for (var i = 0; i < num; i++) {
+		for (var j = 0; j < num; j++) {
+			var n = num * i + j;
+			aLi[n].x = j;
+			aLi[n].y = i;
+			aLi[n].index = -1;
+			aLi[n].innerHTML = -1;
+		}
+	}
+}
+
+function setQueen(iQueen) {
+	if (iQueen == num) {
+		cunt++;
+		return
+	};
+	for (var i = 0; i < num; i++) {
+		if (aLi[iQueen*num + i].index == -1) {
+			aLi[iQueen*num + i].index = iQueen;
+			aLi[iQueen*num + i].innerHTML = iQueen;
+		
+			var x = aLi[iQueen*num + i].x;
+			var y = aLi[iQueen*num + i].y;
+			for (var j = 0; j < num * num; j++) {
+				if ( aLi[j].index == -1 && (aLi[j].x == x || aLi[j].y == y || (aLi[j].x + aLi[j].y) == x + y || (aLi[j].x - aLi[j].y) == x - y) ) {
+					aLi[j].index = iQueen;
+					aLi[j].innerHTML = iQueen;
+				}
+			}
+			setQueen(iQueen + 1);
+			// 回塑
+			for (var k = 0; k < aLi.length; k++) {
+				if (aLi[k].index == iQueen) {
+					aLi[k].index = -1;
+				}
+			}
+		}
+	}
+}
+
+
+</script>
+</body>
+</html>
