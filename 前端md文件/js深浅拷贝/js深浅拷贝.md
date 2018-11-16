@@ -130,11 +130,11 @@ console.log(b.sex) 	// undefined
 所以对json对象类型使用深拷贝的时候，应该尽量避免函数这种特殊的类型。当然在实际的开发过程中，数据里面是不会有函数数据的。下面就来简单的封装以下深拷贝的函数。
 
 
-# 简单封装下深拷贝函数 #
+# 深拷贝函数封装 #
 <pre>
 function extend(obj) {
 	var newObj
-	// obj属性只能是数组和对象
+	// obj不能是 null、undefined、函数 以外的数据类型
 	if (obj && typeof obj !== 'function' && typeof obj === 'object') {
 		newObj = JSON.parse( JSON.stringify(obj) )
 	} else {
@@ -145,75 +145,6 @@ function extend(obj) {
 </pre>
 
 
-# 关于JSON.parse(JSON.stringify(obj))实现深拷贝应该注意的坑 #
-JSON.parse(JSON.stringify(obj))我们一般用来深拷贝，其过程说白了 就是利用JSON.stringify 将js对象序列化（JSON字符串），再使用JSON.parse来反序列化(还原)js对象；序列化的作用是存储(对象本身存储的只是一个地址映射，如果断电，对象将不复存在，因此需将对象的内容转换成字符串的形式再保存在磁盘上 )和传输（例如 如果请求的Content-Type是 application/x-www-form-urlencoded，则前端这边需要使用qs.stringify(data)来序列化参数再传给后端，否则后端接受不到；<br>
-Content-Type 为 application/json;charset=UTF-8或者 multipart/form-data 则可以不需要  ）；<br>
-我们在使用 JSON.parse(JSON.stringify(obj))时应该注意一下几点：
 
-
-**1、如果obj里面有时间对象，则JSON.stringify后再JSON.parse的结果，时间将只是字符串的形式。而不是时间对象**<br>
-
-**2、如果obj里有RegExp、Error对象，则序列化的结果将只得到空对象**<br>
-
-**3、如果obj里有函数，undefined，则序列化的结果会把函数或 undefined丢失**
-
-**4、如果obj里有NaN、Infinity和-Infinity，则序列化的结果会变成null**
-
-**5、JSON.stringify()只能序列化对象的可枚举的自有属性，例如 如果obj中的对象是有构造函数生成的，则使用JSON.parse(JSON.stringify(obj))深拷贝后，会丢弃对象的constructor**
-
-**6、如果对象中存在循环引用的情况也无法正确实现深拷贝**
-
-
-# 封装真正的深拷贝函数 #
-综合上面所有的关于深拷贝的问题，做下面的函数封装<br>
-如果拷贝的对象不涉及上面讲的情况，可以直接使用 JSON.parse(JSON.stringify(obj))<br>
-但是涉及到上面的情况，可以考虑使用如下方法实现深拷贝：<br>
-**使用方法 var 得到的新对象 = deepClone(要拷贝的对象)**
-
-<pre>
-function getType(obj){
-  //tostring会返回对应不同的标签的构造函数
-  var toString = Object.prototype.toString;
-  var map = {
-    '[object Boolean]'  : 'boolean', 
-    '[object Number]'   : 'number', 
-    '[object String]'   : 'string', 
-    '[object Function]' : 'function', 
-    '[object Array]'    : 'array', 
-    '[object Date]'     : 'date', 
-    '[object RegExp]'   : 'regExp', 
-    '[object Undefined]': 'undefined',
-    '[object Null]'     : 'null', 
-    '[object Object]'   : 'object'
-  }
-  if(obj instanceof Element) {
-    return 'element';
-  }
-  return map[toString.call(obj)];
-}
-
-function deepClone(data){
-  var type = getType(data);
-  var obj;
-  if(type === 'array'){
-    obj = [];
-  } else if(type === 'object'){
-    obj = {};
-  } else {
-    //不再具有下一层次
-    return data;
-  }
-  if(type === 'array'){
-    for(var i = 0, len = data.length; i < len; i++){
-      obj.push(deepClone(data[i]));
-    }
-  } else if(type === 'object'){
-    for(var key in data){
-      obj[key] = deepClone(data[key]);
-    }
-  }
-  return obj;
-}
-</pre>
 
 
