@@ -188,3 +188,73 @@ for (var [key, value] of iterEntries(myObj)) {
   console.log(key, value)
 }
 </pre>
+
+
+
+## Generator 一步执行（自动流程管理） ##
+所谓一步执行 Generator 函数的意思就是，不用在调用 next 方法去往下执行，而是调用一次就把所有 Generator 函数中 yield 语句中的所有方法都执行完成。
+
+普通写法：
+<pre>
+function * generators() {
+  yield fn1()
+  yield fn2()
+}
+
+function fn1() {
+  console.log(1)
+}
+function fn2() {
+  console.log(2)
+}
+
+var fn = generators();
+fn.next()	// 1
+fn.next()	// 2
+</pre>
+
+现在如果有一个方法，只要执行一次，就可以全部调用两个 yield 里面的方法就好了。
+
+封装一个遍历函数：也叫 Thunk 函数
+<pre>
+function run(fn) {
+  var gen = fn();
+
+  function next(err, data) {
+    var result = gen.next(data)
+    if(result.done) return
+    result.value(next)
+  }
+
+  next()
+}
+</pre>
+
+执行方式如下：
+
+<pre>
+run(generators)
+</pre>
+
+这样一来，Generator 函数不仅可以写得像同步，而且还可以一行代码搞定所有的 next 方法调用。
+
+
+## co 模块 ##
+co 模块是由他人发布的一个管理 Generator 函数执行流程的小工具，用于 Generator 函数的自动执行，也就是上面封装的简单的一步执行函数。<br>
+比如有一个 Generator 函数，用于执行两个其他的异步操作，并且该异步操作返回的是一个 Promise 对象。
+
+<pre>
+function * gen() {
+  yield ajax1()  
+  yield ajax2()   
+}
+</pre>
+
+它引入 co 模块后可以这样达到一步执行，并且使用 Promise 对象的 then 方法去回调处理：
+
+<pre>
+var co = require('co');
+co(gen).then((value)=>{
+	console.log(value)
+})
+</pre>
