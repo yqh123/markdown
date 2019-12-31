@@ -57,16 +57,19 @@ obj[sym] = 'hello';
 第二种：
 <pre>
 var obj = {
-	[sym]: 'hello'
+  [sym]: 'hello'
 };
 </pre>
 
 第三种：
 <pre>
 var obj = {};
-Object.defineProperty(obj, sym, {
+let sym = Symbol("sym");
+Object.defineProperty(obj, 'sym', {
   value: &#x27;hello&#x27;
 })
+
+console.log(obj); // {Symbol(sym): "hello"}
 </pre>
 
 注意，在对象读取 symbol 值的时候，不能使用“点”运算符，因为点运算符后面跟的都是字符串，所以对象读取 symbol 值的时候，应该使用“[]”运算符：
@@ -86,7 +89,7 @@ console.log(obj[sym])   // sym hello
 
 
 ## Symbol 属性名的遍历 ##
-Symbol 数据类型作为对象属性名时，它不会出现在 for...in、for...of 循环中，也不会被对象的变量方法 Object.keys()、Object.getOwnPropertyNames() 返回。但它也不是私用属性，它只能被特定的方法 Object.getOwnproperSymbols() 方法返回，返回的是一个数组，成员是当前对象所有的以 symbol 变量作为属性名的 symbol 值：
+Symbol 数据类型作为对象属性名时，它不会出现在 for...in 循环中，也不会被对象的变量方法 Object.keys()、Object.getOwnPropertyNames() 返回。但它也不是私用属性，它只能被特定的方法 Object.getOwnproperSymbols() 方法返回，返回的是一个数组，成员是当前对象所有的以 symbol 变量作为属性名的 symbol 值（或者 Reflect.ownKeys() 方法）：
 
 <pre>
 var sym1 = Symbol(&#x27;sym1&#x27;);

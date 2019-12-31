@@ -164,10 +164,13 @@ function * loadingFn() {
 }
 </pre>
 
-第一次调用 loadingFn() 函数不会执行，而是返回一个遍历器对象，当第一次调用 next 方法的时候，开始执行 show() 函数去显示加载页面，同时执行第一个 yield 返回的异步 ajax1 函数，并执行；<br>
-第二次调用 next 方法时，执行第二个 yield 返回的异步函数 ajax2 函数，并执行；<br>
-第三次调用 next 方法时，从第二个 yield 标记开始，往下执行 hide 函数，隐藏加载页面；<br>
-综上，就是一个典型的通过 Generator 函数去“分阶段”执行异步操作的方式，这样写的话，更便于维护，而且更直观，不用在写回调函数去处理异步加载的过程，其实说白了就是让异步编程有点同步化的过程。<br>
+第一次调用 loadingFn() 函数不会执行，而是返回一个遍历器对象，当第一次调用 next 方法的时候，开始执行 show() 函数去显示加载页面，同时执行第一个 yield 返回的异步 ajax1 函数，并执行；
+
+第二次调用 next 方法时，执行第二个 yield 返回的异步函数 ajax2 函数，并执行；
+
+第三次调用 next 方法时，从第二个 yield 标记开始，往下执行 hide 函数，隐藏加载页面；
+
+综上，就是一个典型的通过 Generator 函数去“分阶段”执行异步操作的方式，这样写的话，更便于维护，而且更直观，不用在写回调函数去处理异步加载的过程，其实说白了就是让异步编程有点同步化的过程。
 
 
 ## 部署 Iterator 接口 ##
@@ -215,28 +218,165 @@ fn.next()	// 2
 
 现在如果有一个方法，只要执行一次，就可以全部调用两个 yield 里面的方法就好了。
 
-封装一个遍历函数：也叫 Thunk 函数
+封装一个遍历函数：也叫 scheduler 函数
 <pre>
-function run(fn) {
-  var gen = fn();
-
-  function next(err, data) {
-    var result = gen.next(data)
-    if(result.done) return
-    result.value(next)
+function scheduler(task) {
+  var taskObj = task.next(task.value);
+  // 如果Generator函数未结束，就继续调用
+  if (!taskObj.done) {
+    task.value = taskObj.value
+    scheduler(task);
   }
-
-  next()
 }
 </pre>
+
+有了这个执行器，执行 Generator 函数方便多了。不管内部有多少个异步操作，直接把 Generator 函数传入run函数即可。
 
 执行方式如下：
 
 <pre>
-run(generators)
+Thunk (generators())
 </pre>
 
 这样一来，Generator 函数不仅可以写得像同步，而且还可以一行代码搞定所有的 next 方法调用。
+
+<pre>
+window.onload = function() {
+  let lodingFn = Thunk(generatorWindowLoad);
+};
+
+function scheduler(task) {
+  var taskObj = task.next(task.value);
+  if (!taskObj.done) {
+    task.value = taskObj.value
+    scheduler(task);
+  }
+}
+
+function* generatorWindowLoad() {
+  yield ajax1();
+  yield ajax2();
+  yield ajax3();
+}
+</pre>
+
+虽然 Generator 函数将异步操作表示得很简洁，但是流程管理却不方便（即何时执行第一阶段、何时执行第二阶段）。
+
+比如，先执行一个 ajax 获取数据，在这个 ajax 执行完成后，在去执行另一个 ajax 获取其他数据，在....
+
+<pre>
+function* generators() {
+  yield fn1();
+  yield fn2();
+  console.log(3);
+}
+
+function fn1() {
+  setTimeout(() => {
+    console.log(1);
+  }, 2000);
+}
+function fn2() {
+  setTimeout(() => {
+    console.log(2);
+  }, 1000);
+}
+
+function scheduler(task) {
+  var taskObj = task.next(task.value);
+  if (!taskObj.done) {
+    task.value = taskObj.value;
+    scheduler(task);
+  }
+}
+
+scheduler(generators());
+</pre>
+
+执行结果为：3 2 1
+
+如果要真正的做到打印结果为：1 2 3，让所有的异步都必须等待上一个异步完成后在执行的话，你可以这样改写：
+
+<pre>
+function* asyncJob() {
+  console.log(1);
+  yield setTimeout(() => {
+    console.log(2);
+    fnNext();
+  }, 1000);
+  console.log(3);
+}
+
+function fnNext() {
+  job.next();
+}
+
+let job = asyncJob();
+fnNext()
+</pre>
+
+执行结果为：1 2 3，其实也就是 job.next() 执行的时机问题
+
+也可以使用 Promise 或者 asnyc 函数了：
+
+【使用 Promise 】：
+<pre>
+let myPromise = new Promise((resolve, reject) => {
+  setTimeout(() => {
+    console.log(1);
+    resolve();
+  }, 1000);
+});
+
+myPromise
+  .then(val => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        console.log(2);
+        resolve("数据123");
+      }, 2000);
+    });
+  })
+  .then(val => {
+    console.log(val); // 数据123
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        console.log(3);
+        resolve();
+      }, 1000);
+    });
+  })
+</pre>
+
+【使用 async 】：下一章讲解
+<pre>
+function fn1() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      console.log(1);
+      resolve();
+    }, 2000);
+  });
+}
+function fn2() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      console.log(2);
+      resolve();
+    }, 1000);
+  });
+}
+
+const asyncReadFile = async function() {
+  const f1 = await fn1(1);
+  const f2 = await fn2(1);
+  console.log(3);
+};
+
+asyncReadFile();
+</pre>
+
+执行结果为：1 2 3
 
 
 ## co 模块 ##
@@ -258,3 +398,8 @@ co(gen).then((value)=>{
 	console.log(value)
 })
 </pre>
+
+
+## 总结 ##
+1. 如果要对异步操作进行管理，不建议使用 Generator，要使用 async 函数
+2. 对一些要按顺序执行的同步操作时，可以用下，还挺方便阅读和管理的
