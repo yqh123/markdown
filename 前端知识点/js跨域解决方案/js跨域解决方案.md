@@ -91,9 +91,9 @@
 # 为什么浏览器要限制跨域访问呢？ #
 > 原因就是安全问题：如果一个网页可以随意地访问另外一个网站的资源，那么就有可能在客户完全不知情的情况下出现安全问题。比如下面的操作就有安全问题：
 
-1. 用户访问www.mybank.com ，登陆并进行网银操作，这时cookie啥的都生成并存放在浏览器
+1. 用户访问www.mybank.com ，登陆并进行网银操作，这时cookie啥的都生成并存放在电脑硬盘里面
 2. 用户突然想起件事，并迷迷糊糊地访问了一个邪恶的网站 www.xiee.com
-3. 时该网站就可以在它的页面中，拿到银行的cookie，比如用户名，登陆token等，然后发起对www.mybank.com 的操作。
+3. 该网站就可以在它的页面中，拿到银行的cookie，比如用户名，登陆token等，然后发起对www.mybank.com 的操作。
 4. 如果这时浏览器不予限制，并且银行也没有做响应的安全处理的话，那么用户的信息有可能就这么泄露了。
 
 
@@ -110,13 +110,14 @@
 <pre>
 &lt;script&gt;
 function dosomething (data) {
-	// data 参数就是后端返回的数据 
+  // data 参数就是后端返回的数据 
 }
 &lt;/script&gt;
 &lt;script src=&quot;http://example.com/data.php?callback=dosomething&quot;&gt;&lt;/script&gt;
 </pre>
 
-我们看到获取数据的地址后面还有一个callback参数，按惯例是用这个参数名，但是你用其他的也一样。当然如果获取数据的jsonp地址页面不是你自己能控制的，就得按照提供数据的那一方的规定格式来操作了，也就是需要后端告诉你callback执行的函数名。<br>
+我们看到获取数据的地址后面还有一个callback参数，按惯例是用这个参数名，但是你用其他的也一样。当然如果获取数据的jsonp地址页面不是你自己能控制的，就得按照提供数据的那一方的规定格式来操作了，也就是需要后端告诉你callback执行的函数名。
+
 因为是当做一个js文件来引入的，所以http://example.com/data.php返回的必须是一个能执行的js文件，所以这个页面的php代码可能是这样的:
 
 <pre>
@@ -132,31 +133,36 @@ echo $callback.&#x27;(&#x27;.json_encode($data).&#x27;)&#x27;	// 输出数据
 <pre>
 &lt;script&gt;
 function dosomething (data) {
-	console.log(data)	// ['a','b','c']
+  console.log(data)	// ['a','b','c']
 }
 &lt;/script&gt;
 </pre>
 
-所以通过http://example.com/data.php?callback=dosomething得到的js文件，就是我们之前定义的dosomething函数,并且它的参数就是我们需要的json数据，这样我们就跨域获得了我们需要的数据。<br>
-这样jsonp的原理就很清楚了，通过script标签引入一个js文件，这个js文件载入成功后会执行我们在url参数中指定的函数，并且会把我们需要的json数据作为参数传入。所以jsonp是需要服务器端的页面进行相应的配合的。<br>
-知道jsonp跨域的原理后我们就可以用js动态生成script标签来进行跨域操作了，而不用特意的手动的书写那些script标签。如果你的页面使用jquery，那么通过它封装的方法就能很方便的来进行jsonp操作了。<br>
-原理是一样的，只不过我们不需要手动的插入script标签以及定义回掉函数。jquery会自动生成一个全局函数来替换callback=?中的问号，之后获取到数据后又会自动销毁，实际上就是起一个临时代理函数的作用。$.getJSON方法会自动判断是否跨域，不跨域的话，就调用普通的ajax方法；跨域的话，则会以异步加载js文件的形式来调用jsonp的回调函数。<br>
+所以通过http://example.com/data.php?callback=dosomething得到的js文件，就是我们之前定义的dosomething函数,并且它的参数就是我们需要的json数据，这样我们就跨域获得了我们需要的数据。
+
+这样jsonp的原理就很清楚了，通过script标签引入一个js文件，这个js文件载入成功后会执行我们在url参数中指定的函数，并且会把我们需要的json数据作为参数传入。所以jsonp是需要服务器端的页面进行相应的配合的。
+
+知道jsonp跨域的原理后我们就可以用js动态生成script标签来进行跨域操作了，而不用特意的手动的书写那些script标签。如果你的页面使用jquery，那么通过它封装的方法就能很方便的来进行jsonp操作了。
+
+原理是一样的，只不过我们不需要手动的插入script标签以及定义回掉函数。jquery会自动生成一个全局函数来替换callback=?中的问号，之后获取到数据后又会自动销毁，实际上就是起一个临时代理函数的作用。$.getJSON方法会自动判断是否跨域，不跨域的话，就调用普通的ajax方法；跨域的话，则会以异步加载js文件的形式来调用jsonp的回调函数。
 
 <pre>
 $.getJSON(&#x27;http://example.com/data.php?callback=?&#x27;, function(json) {
-		// 处理获得的json数据
+  // 处理获得的json数据
 });
 </pre>
 
-JSONP的缺点主要源自他的script引用资源方式，JSONP的缺点如下：
-1. SONP是通过script标签获取资源的，也就是说JSONP注定只能用GET的方式访问资源，GET以外的请求无法做到；
-2. SONP是通过src引用不同源的代码，如果其他域的代码存在恶意代码，那么这将造成严重的网络安全，如果需要跨域的服务器不足以信任，那么必须放弃JSONP；
+**JSONP的缺点主要源自他的script引用资源方式，JSONP的缺点如下**：
+
+1. JSONP是通过script标签获取资源的，也就是说JSONP注定只能用GET的方式访问资源，GET以外的请求无法做到；
+2. JSONP是通过src引用不同源的代码，如果其他域的代码存在恶意代码，那么这将造成严重的网络安全，如果需要跨域的服务器不足以信任，那么必须放弃JSONP；
 3. 要确定JSONP请求是否成功，需要启动一个计时器监测数据变动。
 
 
 
 # 通过修改 document.domain 来跨子域(只适用于不同子域的框架间的交互) #
-浏览器都有一个同源策略，其限制之一就是第一种方法中我们说的不能通过ajax的方法去请求不同源中的文档。 它的第二个限制是浏览器中不同域的框架之间是不能进行js的交互操作的。**所以js不能访问不同域的 iFrame 中的内容**。<br>
+浏览器都有一个同源策略，其限制之一就是第一种方法中我们说的不能通过ajax的方法去请求不同源中的文档。 它的第二个限制是浏览器中不同域的框架之间是不能进行js的交互操作的。**所以js不能访问不同域的 iFrame 中的内容**。
+
 **有一点需要说明，不同的框架之间（父子或同辈），是能够获取到彼此的window对象的，但蛋疼的是你却不能使用获取到的window对象的属性和方法**(html5中的postMessage方法是一个例外，还有些浏览器比如ie6也可以使用top、parent等少数几个属性)，总之，你可以当做是只能获取到一个几乎无用的window对象。比如，有一个页面，它的地址是http://www.example.com/a.html  ， 在这个页面里面有一个iframe，它的src是http://example.com/b.html, 很显然，这个页面与它里面的iframe框架是不同域的，所以我们是无法通过在页面中书写js代码来获取iframe中的东西的：
 
 <pre>
@@ -172,7 +178,8 @@ function onLoadFn () {
 &lt;iframe id=&quot;iframe&quot; src=&quot;http://example.com/b.html&quot; onload=&quot;onLoadFn()&quot;&gt;&lt;/iframe&gt;
 </pre>
 
-这个时候，document.domain就可以派上用场了，我们只要把http://www.example.com/a.html 和 http://example.com/b.html这两个页面的document.domain都设成相同的域名就可以了。但要注意的是，document.domain的设置是有限制的，我们只能把document.domain设置成自身或更高一级的父域，且主域必须相同。<br>
+这个时候，document.domain就可以派上用场了，我们只要把http://www.example.com/a.html 和 http://example.com/b.html这两个页面的document.domain都设成相同的域名就可以了。但要注意的是，document.domain的设置是有限制的，我们只能把document.domain设置成自身或更高一级的父域，且主域必须相同。
+
 例如：a.b.example.com 中某个文档的document.domain 可以设成a.b.example.com、b.example.com 、example.com中的任意一个，但是不可以设成 c.a.b.example.com,因为这是当前域的子域，也不可以设成baidu.com,因为主域已经不相同了。<br>
 
 **在页面 http://www.example.com/a.html 中设置document.domain:**
@@ -195,14 +202,16 @@ function test () {
 document.domain = &#x27;example.com&#x27;	
 </pre>
 
-这样我们就可以通过js访问到iframe中的各种属性和对象了。<br>
-**不过如果你想在 http://www.example.com/a.html 页面中通过ajax直接请求 http://example.com/b.html 页面，即使你设置了相同的document.domain也还是不行的，所以修改document.domain的方法只适用于不同子域的框架间的交互**。<br>
+这样我们就可以通过js访问到iframe中的各种属性和对象了。
+
+**不过如果你想在 http://www.example.com/a.html 页面中通过ajax直接请求 http://example.com/b.html 页面，即使你设置了相同的document.domain也还是不行的，所以修改document.domain的方法只适用于不同子域的框架间的交互**。
+
 如果你想通过ajax的方法去与不同子域的页面交互，除了使用jsonp的方法外，还可以用一个隐藏的iframe来做一个代理。原理就是让这个iframe载入一个与你想要通过ajax获取数据的目标页面处在相同的域的页面，所以这个iframe中的页面是可以正常使用ajax去获取你要的数据的，然后就是通过我们刚刚讲得修改document.domain的方法，让我们能通过js完全控制这个iframe，这样我们就可以让iframe去发送ajax请求，然后收到的数据我们也可以获得了。
 
 
 
 # 使用 window.name 来进行跨域 #
-window对象有个name属性，该属性有个特征：即在一个窗口(window)的生命周期内,窗口载入的所有的页面都是共享一个window.name的，每个页面对window.name都有读写的权限，window.name是持久存在一个窗口载入过的所有页面中的，并不会因新页面的载入而进行重置。(这里和上面的跨域访问window对象是有区别的，这个窗口不是同时存在两个跨域页面的，而是单独存在某一个页面，你可以通过跳转同一窗口的方式去访问同一个window对象)。<br>
+window对象有个name属性，该属性有个特征：即在一个窗口(window)的生命周期内,窗口载入的所有的页面都是共享一个window.name的，每个页面对window.name都有读写的权限，window.name是持久存在一个窗口载入过的所有页面中的，并不会因新页面的载入而进行重置。(这里和上面的跨域访问window对象是有区别的，这个窗口不是同时存在两个跨域页面的，而是单独存在某一个页面，你可以通过跳转同一窗口的方式去访问同一个window对象)。
 
 比如：有一个页面a.html,它里面有这样的代码：
 <pre>
@@ -217,17 +226,22 @@ setTimeout(function() {		// 3秒后这个窗口重定向到b页面
 alert(window.name)	// 我是a页面的数据
 </pre>
 
-我们看到在b.html页面上成功获取到了它的上一个页面a.html给window.name设置的值。如果在之后所有载入的页面都没对window.name进行修改的话，那么所有这些页面获取到的window.name的值都是a.html页面设置的那个值。当然，如果有需要，其中的任何一个页面都可以对window.name的值进行修改。注意，window.name的值只能是字符串的形式，这个字符串的大小最大能允许2M左右甚至更大的一个容量，具体取决于不同的浏览器，但一般是够用了。<br>
-上面的例子中，我们用到的页面a.html和b.html是处于同一个域的，不过即使a.html与b.html处于不同的域中，上述结论同样是适用的，这也正是利用window.name进行跨域的原理。<br>
-下面就来看一看具体是怎么样通过window.name来跨域获取数据的。还是举例说明。<br>
-比如有一个www.example.com/a.html页面,需要通过a.html页面里的js来获取另一个位于不同域上的页面www.cnblogs.com/data.html里的数据。<br>
-data.html页面里的代码很简单，就是给当前的window.name设置一个a.html页面想要得到的数据值。data.html里的代码：
+我们看到在b.html页面上成功获取到了它的上一个页面a.html给window.name设置的值。如果在之后所有载入的页面都没对window.name进行修改的话，那么所有这些页面获取到的window.name的值都是a.html页面设置的那个值。当然，如果有需要，其中的任何一个页面都可以对window.name的值进行修改。注意，window.name的值只能是字符串的形式，这个字符串的大小最大能允许2M左右甚至更大的一个容量，具体取决于不同的浏览器，但一般是够用了。
+
+上面的例子中，我们用到的页面a.html和b.html是处于同一个域的，不过即使a.html与b.html处于不同的域中，上述结论同样是适用的，这也正是利用window.name进行跨域的原理。
+
+下面就来看一看具体是怎么样通过window.name来跨域获取数据的。还是举例说明。
+
+比如有一个www.example.com/a.html页面,需要通过a.html页面里的js来获取另一个位于不同域上的页面www.cnblogs.com/data.html里的数据。
+
+www.cnblogs.com/data.html 页面里的代码很简单，就是给当前的window.name设置一个a.html页面想要得到的数据值。www.cnblogs.com/data.html 里的代码：
 
 <pre>
 window.name = '我是www.cnblogs.com/data.html页面提供的数据'
 </pre>
 
-那么在a.html页面中，我们怎么把data.html页面载入进来呢？显然我们不能直接在a.html页面中通过改变window.location来载入data.html页面，因为我们想要即使a.html页面不跳转也能得到data.html里的数据。答案就是在a.html页面中使用一个隐藏的iframe来充当一个中间人角色，由iframe去获取data.html的数据，然后a.html再去得到iframe获取到的数据。<br>
+那么在a.html页面中，我们怎么把data.html页面载入进来呢？显然我们不能直接在a.html页面中通过改变window.location来载入data.html页面，因为我们想要即使a.html页面不跳转也能得到data.html里的数据。答案就是在a.html页面中使用一个隐藏的iframe来充当一个中间人角色，由iframe去获取data.html的数据，然后a.html再去得到iframe获取到的数据。 
+
 充当中间人的iframe想要获取到data.html的通过window.name设置的数据，只需要把这个iframe的src设为www.cnblogs.com/data.html就行了。然后a.html想要得到iframe所获取到的数据，也就是想要得到iframe的window.name的值，还必须把这个iframe的src设成跟a.html页面同一个域才行，不然根据前面讲的同源策略，a.html是不能访问到iframe里的window.name属性的。这就是整个跨域过程。
 
 <pre>
@@ -250,17 +264,20 @@ function getName () {
 
 
 # 使用HTML5中新引进的window.postMessage方法来跨域传送数据 #
-window.postMessage(message,targetOrigin)  方法是html5新引进的特性，可以使用它来向其它的window对象发送消息，无论这个window对象是属于同源或不同源，目前IE8+、FireFox、Chrome、Opera等浏览器都已经支持window.postMessage方法。<br>
-调用postMessage方法的window对象是指要接收消息的那一个window对象，该方法的第一个参数message为要发送的消息，类型只能为字符串；第二个参数targetOrigin用来限定接收消息的那个window对象所在的域，如果不想限定域，可以使用通配符 * 。<br>
-需要接收消息的window对象，可是通过监听自身的message事件来获取传过来的消息，消息内容储存在该事件对象的data属性中。<br>
+window.postMessage(message,targetOrigin)  方法是html5新引进的特性，可以使用它来向其它的window对象发送消息，无论这个window对象是属于同源或不同源，目前IE8+、FireFox、Chrome、Opera等浏览器都已经支持window.postMessage方法。  
+
+调用postMessage方法的window对象是指要接收消息的那一个window对象，该方法的第一个参数message为要发送的消息，类型只能为字符串；第二个参数targetOrigin用来限定接收消息的那个window对象所在的域，如果不想限定域，可以使用通配符 * 。
+
+需要接收消息的window对象，可是通过监听自身的message事件来获取传过来的消息，消息内容储存在该事件对象的data属性中。
+
 上面所说的向其他window对象发送消息，其实就是指一个页面有几个框架的那种情况，因为每一个框架都有一个window对象。在讨论第二种方法的时候，我们说过，不同域的框架间是可以获取到对方的window对象的，而且也可以使用window.postMessage这个方法。下面看一个简单的示例，有两个页面：
 
 **这个是a页面： http://test.com/a.html**
 <pre>
 function onLoadFn () {
-	var iframe = document.getElementById(&#x27;iframe&#x27;);
-	var win = iframe.contentWinodw;	
-	win.postMessage(&#x27;我是a页面的数据&#x27;, &#x27;*&#x27;);	// 向不同域下的b页面发送数据
+  var iframe = document.getElementById(&#x27;iframe&#x27;);
+  var win = iframe.contentWinodw;	
+  win.postMessage(&#x27;我是a页面的数据&#x27;, &#x27;*&#x27;);	// 向不同域下的b页面发送数据
 }
 &lt;/script&gt;
 
@@ -270,8 +287,8 @@ function onLoadFn () {
 **这个是b页面： http://www.test.com/b.html**
 <pre>
 window.onmessage = function (e) {	// 注册message事件来接收数据
-	e = e || event;	// 获取事件对象
-	alert(e.data);	// 我是a页面的数据
+  e = e || event;	// 获取事件对象
+  alert(e.data);	// 我是a页面的数据
 }
 </pre>
 
@@ -281,8 +298,10 @@ window.onmessage = function (e) {	// 注册message事件来接收数据
 
 
 # 跨域资源共享（CORS） #
-CORS（Cross-Origin Resource Sharing）跨域资源共享，定义了必须在访问跨域资源时，浏览器与服务器应该如何沟通。CORS背后的基本思想就是使用自定义的HTTP头部让浏览器与服务器进行沟通，从而决定请求或响应是应该成功还是失败。<br>
-服务器端对于CORS的支持，主要就是通过设置 Access-Control-Allow-Origin 来进行的。如果浏览器检测到相应的设置，就可以允许Ajax进行跨域的访问。只需要在后台中加上响应头来允许域请求！在被请求的Response header中加入以下设置，就可以实现跨域访问了。<br>
+CORS（Cross-Origin Resource Sharing）跨域资源共享，定义了必须在访问跨域资源时，浏览器与服务器应该如何沟通。CORS背后的基本思想就是使用自定义的HTTP头部让浏览器与服务器进行沟通，从而决定请求或响应是应该成功还是失败。
+
+服务器端对于CORS的支持，主要就是通过设置 Access-Control-Allow-Origin 来进行的。如果浏览器检测到相应的设置，就可以允许Ajax进行跨域的访问。只需要在后台中加上响应头来允许域请求！在被请求的Response header中加入以下设置，就可以实现跨域访问了。
+
 这些操作都是在服务端完成的。
 
 <pre>
@@ -299,8 +318,9 @@ CORS（Cross-Origin Resource Sharing）跨域资源共享，定义了必须在�
 # 代理服务器 #
 > 更多细节，自行百度
 
-代理服务器解决跨域的思路是利用代理服务器对浏览器页面的请求进行转发，因为同源策略的限制只存在在浏览器中，到了服务器端就没有这个限制了。现在有很多跨域的服务端访问都是这么做的。<br>
-通俗点的理解是这样的：<br>
+代理服务器解决跨域的思路是利用代理服务器对浏览器页面的请求进行转发，因为同源策略的限制只存在在浏览器中，到了服务器端就没有这个限制了。现在有很多跨域的服务端访问都是这么做的。
+
+通俗点的理解是这样的： 
 
 1. 客户端发起请求-----代理服务器-----服务端响应
 2. 服务的返回数据-----代理服务器-----客户端拿到数据

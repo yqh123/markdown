@@ -66,16 +66,15 @@ console.log('2');
 解析过程：
 
 1. 代码执行到 ajax 时，ajax 进入异步的 Event Table（事件表）中，并注册回调函数 success
-2. console.log('2') 进入主线程中
-3. ajax 事件完成，回调函数 success 进入 Event Queue（事件队列）
+2. console.log('2') 进入主线程中（你可以理解它进入了【宏任务（同步）】列队里面）
+3. ajax 事件完成，回调函数 success 进入 Event Queue（事件队列）（你可以理解它进入了【宏任务（异步）】列队里面）
 
 执行过程：
 
-1. 开始先开始执行主线程中的任务 console.log('2')
-2. 主线程为空时，从 Event Queue（事件队列） 中读取回调函数 success 并执行
+1. 开始先开始执行主线程【宏任务（同步）】列队中的任务 console.log('2')
+2. 主线程【宏任务（同步）】列队为空时，从 Event Queue（【宏任务（异步）】列队里面） 中读取回调函数 success 并执行
 
 所以执行结果为：2、发送成功
-
 
 
 ## setTimeout ##
@@ -85,6 +84,7 @@ console.log('2');
 setTimeout(() => {
     task()
 },3000)
+
 sleep(10000000)	// 这是一个同步函数
 </pre>
 
@@ -92,20 +92,20 @@ sleep(10000000)	// 这是一个同步函数
 
 1. task()进入Event Table并注册,计时开始。
 2. 执行sleep函数，很慢，非常慢，但计时仍在继续中。
-3. 3秒到了，计时事件 setTimeout 完成，task() 进入 Event Queue，但是 sleep 太慢了，还没执行完，只好等着主线程空闲能够空闲下来。
-4. sleep 终于执行完了，task() 终于从 Event Queue 进入了主线程执行，并开始执行
+3. 3秒到了，计时事件 setTimeout 完成，task() 进入 Event Queue【宏任务（异步）】列队，但是 sleep 太慢了，还没执行完，只好等着主线程【宏任务（同步）】列队空闲能够空闲下来。
+4. sleep 终于执行完了，task() 终于从 Event Queue【宏任务（异步）】列队进入了主线程执行，并开始执行
 
-上述的流程走完，我们知道 setTimeout 这个函数，是经过指定时间后，把要执行的任务(本例中为task())加入到 Event Queue 中，又因为是单线程任务要一个一个执行，如果前面的任务需要的时间太久，那么只能等着，导致真正的延迟时间远远大于3秒。
+上述的流程走完，我们知道 setTimeout 这个函数，是经过指定时间后，把要执行的任务(本例中为task())加入到 Event Queue【宏任务（异步）】列队中，又因为是单线程任务要一个一个执行，如果前面的任务需要的时间太久，那么只能等着，导致真正的延迟时间远远大于3秒。
 
 我们还经常遇到setTimeout(fn,0)这样的代码，0秒后执行又是什么意思呢？是不是可以立即执行呢？
 
 答案是不会的，setTimeout(fn,0)的含义是，指定某个任务在主线程最早可得的空闲时间执行，意思就是不用再等多少秒了，只要主线程执行栈内的同步任务全部执行完成，栈为空就马上执行。举例说明：
 
 <pre>
-console.log('1');
 setTimeout(() => {
-    console.log('2')
+  console.log('2')
 },0);
+console.log('1');
 </pre>
 
 得到的结果依然是：1、2
@@ -114,9 +114,9 @@ setTimeout(() => {
 
 
 ## setInterval ##
-上面说完了setTimeout，当然不能错过它的孪生兄弟setInterval。他俩差不多，只不过后者是循环的执行。对于执行顺序来说，setInterval会每隔指定的时间将注册的函数置入Event Queue，如果前面的任务耗时太久，那么同样需要等待。
+上面说完了setTimeout，当然不能错过它的孪生兄弟setInterval。他俩差不多，只不过后者是循环的执行。对于执行顺序来说，setInterval会每隔指定的时间将注册的函数置入Event Queue【宏任务（异步）】列队，如果前面的任务耗时太久，那么同样需要等待。
 
-唯一需要注意的一点是，对于 setInterval(fn,ms) 来说，我们已经知道**不是每过 ms 秒会执行一次 fn，而是每过 ms 秒，会有 fn 进入 Event Queue**。
+唯一需要注意的一点是，对于 setInterval(fn,ms) 来说，我们已经知道**不是每过 ms 秒会执行一次 fn，而是每过 ms 秒，会有 fn 进入 Event Queue【宏任务（异步）】列队**。
 
 
 ## Promise 和 async ##
@@ -136,41 +136,87 @@ new Promise(function(resolve) {
 console.log('console');
 </pre>
 
-这里 setTimeout 和 Promise 都是异步的，它们都会进入到 Event Table 中，并进入到 Event Queue 里面，那么它们两个谁先执行呢？
+这里 setTimeout 和 Promise 都是异步的，它们都会进入到 Event Table 中，并进入到 Event Queue【宏任务（异步）】列队 里面，那么它们两个谁先执行呢？
 
-除了广义的同步任务和异步任务，我们对任务有更精细的定义：
+除了广义的同步任务和异步任务，js 对任务有更精细的定义：
 
-> 提示：其实宏任务中包括 “整体js代码”，但为了更好的理解“宏任务”和“微任务”，我们把它先排除掉，不然理解起来太饶。比如真正的理解是这样的：进入整体代码(宏任务)后，开始第一次循环。接着执行所有的微任务。然后再次从宏任务开始，找到其中一个任务队列执行完毕，再执行所有的微任务。
+> 提示：其实宏任务中包括 “整体js代码”，但为了更好的理解“【宏任务（同步）】列队”和“【宏任务（异步）】列队”，我们把它先排除掉，不然理解起来太饶。比如真正的理解是这样的：
+
+<pre>
+1. 先找到【宏任务（同步）】任务，先执行它里面的【宏列队】，执行完后在执行它里面的【微列队】
+2. 然后在按顺序找到【宏任务（异步）】任务（异步任务可能有多个），先执行它里面的【宏列队】，执行完后在执行它里面的【微列队】
+
+宏任务（同步）：{ 
+  宏列队：
+  微列队：
+}
+
+宏任务（异步1：）：{
+  宏列队：
+  微列队：
+}
+
+宏任务（异步2：）：{
+  宏列队：
+  微列队：
+}
+</pre>
 
 - macro-task（宏任务）：包括 整体代码script、setTimeout，setInterval
-- micro-task（微任务）：Promise（then方法）或者 async（then方法）
+- micro-task（微任务）：Promise（then方法）或者 async（then方法和第二个后面的 awiat）（这个下面有讲）
 
-不同类型的任务会进入对应的 Event Queue 中，比如 setTimeout 和 setInterval 会进入宏任务列队里面相同的 Event Queue。而 Promise 的 then 方法会进入微任务列队里面相同的 Event Queue。
+不同类型的任务会进入对应的任务列队中，比如 setTimeout 和 setInterval 会进入【宏任务（异步）】列队里面。而 Promise 的 then 方法会进入微任务列队里面。
 
-事件循环（Event loop）的顺序，决定 js 代码的执行顺序：
+事件循环（Event loop）的顺序，决定 js 代码的执行顺序：看下面的解析过程
+
 <pre>
 setTimeout(function() {
-    console.log('setTimeout');
-})
+  console.log(1);
+}, 1000);
 
 new Promise(function(resolve) {
-    console.log('promise');
+  console.log(2);
+  resolve();
 }).then(function() {
-    console.log('then');
-})
+  console.log(3);
+});
 
-console.log('console');
+setTimeout(function() {
+  new Promise(function(resolve) {
+    console.log(4);
+    resolve();
+  }).then(function() {
+    console.log(5);
+  });
+}, 2000);
+
+console.log(6);
 </pre>
 
 - 这段代码作为宏任务，进入主线程
-- 先遇到 setTimeout，那么将其回调函数注册后分发到宏任务的事件列队 Event Queue 中
-- 接下来遇到了 Promise，new Promise立即执行，then 函数分发到微任务的事件列队 Event Queue 中
-- 遇到console.log()，立即执行
-- 好啦，整体代码 script 作为第一个宏任务执行结束，看看有哪些微任务？我们发现了 then 在微任务 Event Queue里面，执行
-- ok，第一轮事件循环结束了，我们开始第二轮循环，当然要从宏任务 Event Queue 开始。我们发现了宏任务 Event Queue 中 setTimeout 对应的回调函数，立即执行
+- 先遇到 setTimeout，那么将其回调函数注册后分发到【宏任务（异步）】的事件列队中
+- 接下来遇到了 Promise，new Promise立即执行，then 函数分发到【宏任务（同步）】列队里面的微任务列队中
+- 遇到console.log()，分发到【宏任务（同步）】列队里面的宏任务列队中
+- 排列完毕，开始第一轮循环，从【宏任务（同步）】开始，先执行【宏列队】，完了之后在执行【微列队】
+- 然后在执行【宏任务（异步）】列队，先执行【宏列队】，完了之后在执行【微列队】
 - 事件循环结束
 
-通过上面的分析可以看出：整体代码作为宏任务时，同步的代码会被立即执行。然后在执行宏任务列队中的微任务，第一轮事件循环结束；之后第二轮事件循环会重宏任务列队中开始执行。
+<pre>
+宏任务（同步）：{ 
+  宏列队：console.log(2)、console.log(6);
+  微列队：console.log(3)
+}
+
+宏任务（异步 setTimeout 1000）：{
+  宏列队：console.log(1)
+  微列队：
+}
+
+宏任务（异步 setTimeout 2000）：{
+  宏列队：console.log(4)
+  微列队：console.log(5)
+}
+</pre>
 
 导图地址：[https://user-gold-cdn.xitu.io/2017/11/21/15fdcea13361a1ec?imageView2/0/w/1280/h/960/format/webp/ignore-error/1](https://user-gold-cdn.xitu.io/2017/11/21/15fdcea13361a1ec?imageView2/0/w/1280/h/960/format/webp/ignore-error/1 "img2")
 
@@ -203,92 +249,156 @@ console.log('9');
 
 解析：
 <pre>
-宏任务（主线程）：1、6、7、13
-微任务列队(then)：8
-宏任务列队(setTimeout)：{
-	主线程：2、3、4
-	微任务列队(then)：5
+宏任务（同步）：{
+  宏列队：1 6 7 9
+  微列队：8
+}
+
+宏任务（异步）：{
+  宏列队：2 3 4
+  微列队：5
 }
 </pre>
-执行结果：1、6、7、13	8	2、3、4、5
+
+从上面可以看出，先去区分【宏任务（同步）】和【宏任务（异步）】，然后在区分【宏任务（同步、异步）】里面的宏列队和微列队。
+
+第一轮循环：从【宏任务（同步）】中开始先执行宏列队，然后在执行微列队
+
+第二轮循环：从【宏任务（异步）】中开始先执行宏列队，然后在执行微列队
+
+执行结果：1、6、7、9、8、2、3、4、5
+
+
 
 **现在我们又加深下难度：添加两个 setTimeout**
 <pre>
-console.log('1');
+console.log("1");
 
 setTimeout(function() {
-  console.log('2');
+  console.log("2");
 
   new Promise(function(resolve) {
-    console.log('3');
+    console.log("3");
     resolve();
-    console.log('4');
   }).then(function() {
-    console.log('5')
-  })
-})
+    console.log("4");
+  });
+}, 2000);
 
 new Promise(function(resolve) {
-  console.log('6');
+  console.log("5");
   resolve();
-  console.log('7');
 }).then(function() {
-  console.log('8')
-})
+  console.log("6");
+});
 
 setTimeout(function() {
-  console.log('9');
+  console.log("7");
 
   new Promise(function(resolve) {
-    console.log('10');
+    console.log("8");
     resolve();
-    console.log('11');
   }).then(function() {
-    console.log('12')
-  })
-})
+    console.log("9");
+  });
+}, 1000);
 
-console.log('13');
+console.log("10");
 </pre>
 
 
 解析：
 <pre>
-宏任务（主线程）：1、6、7、13
-微任务列队(then)：8			// 之上的为第一轮事件循环
-宏任务列队(setTimeout)：{
-	setTimeout1: {			// 这个是第二轮事件循环
-		主线程：2、3、4
-		微任务列队(then)：5
-	}
-	setTimeout2: {			// 这个是第三轮事件循环
-		主线程：9、10、11
-		微任务列队(then)：12
-	}
+宏任务（同步）：{
+  宏列队：1 5 10
+  微列队：6
+}
+
+宏任务（异步：setTimeout 1000）：{
+  宏列队：7 8
+  微列队：9
+}
+
+宏任务（异步：setTimeout 2000）：{
+  宏列队：2 3
+  微列队：4
 }
 </pre>
-执行结果：1、6、7、13	8	2、3、4、5（setTimeout1）	9、10、11、12（setTimeout2）
+
+
+执行结果：（1、5、10、6）---（7、8、9）---（2、3、4）
 
 **值得注意的地方是两个 setTimeout 中都有各自的 “微任务”，它们是不会在分解的，而是在各自的 setTimeout 中全部执行完毕。当宏任务中第一个 setTimeout 内部执行完后，才开始执行第二个 setTimeout。**
 
 **需要注意的另外一点是，到底哪个 setTimeout 先进入事件循环，有两个因素：第一看它们的代码顺序，靠前的先执行；第二，看延时时间，时间越小，越先进入事件循环。**
 
+关于定时器的【宏任务（异步）】添加执行列队的顺序请看下面这个列子：
+
+<pre>
+console.log(1);
+
+setTimeout(() => {
+  console.log(2);
+}, 2000);
+
+new Promise((resolve, reject) => {
+  console.log(3);
+  resolve();
+}).then(() => {
+  console.log(4);
+});
+
+setTimeout(() => {
+  console.log(5);
+  setTimeout(() => {
+    console.log(6);
+  }, 3000);
+}, 1000);
+</pre>
+
+注意 1000ms 的定时器里面还有一个 3000ms 的定时器，按顺序解析如下：
+
+<pre>
+宏任务（同步）：{
+  宏列队：1 3
+  微列队：4
+}
+
+宏任务（异步：setTimeout 1000）：{
+  宏列队：5
+  微列队：
+}
+
+宏任务（异步：setTimeout 2000）：{
+  宏列队：2
+  微列队：
+}
+
+宏任务（异步：setTimeout 3000）：{
+  宏列队：6
+  微列队：
+}
+</pre>
+
+从上面可以看出，不管你有多少个定时器的异步任务，我都是按照你的时间顺序来排列【宏任务（异步）】的
+
+执行结果：（1、3、4）---（5）---（2）---（6）
 
 
-## Generator 和 async ##
-Generator 函数是 ES6 提供的一种异步编程的解决方案（它不是异步函数，它可以理解为一个异步任务的容器）。同理 async 它是 Generator 函数的语法糖，代表里面有异步程序。
+## Generator ##
+Generator 函数是 ES6 提供的一种异步编程的解决方案（它不是异步函数，它可以理解为一个异步任务的容器）。
 
 <pre>
 setTimeout(function(){
-	console.log(1)
+  console.log(1)
 },0)
 
 function * sun() {
-	yield console.log(2)
+  yield console.log(2)
 }
 
 var sunG = sun();
-sunG.next()	// 这里会立马执行
+sunG.next()	// 这里会立马执行 yield 后面的同步程序
 
 console.log(3);
 </pre>
@@ -296,91 +406,195 @@ console.log(3);
 执行结果为：2、3、1
 
 现在改一下代码，把 yield 后面执行的函数改成异步的：
+
 <pre>
-setTimeout(function(){
-	console.log(1)
-},2000)
+var fn = function() {
+  setTimeout(() => {
+    console.log(3);
+  }, 2000);
+};
 
-function * sun() {
-	yield fn()
+function* sun() {
+  console.log(1);
+  yield fn();
 }
 
-var fn = function () {
-	setTimeout(()=>{
-		console.log(2)
-	}, 1000)
-}
+setTimeout(function() {
+  console.log(2);
+}, 1000);
 
 var sunG = sun();
-sunG.next()
+sunG.next();
 
-console.log(3);
+console.log(4);
 </pre>
-执行结果为：3、2、1
 
-我们在该一下代码：
+看代码就有点迷糊了，直接按上面的【宏任务（同步、异步）】来解析看下：
+
 <pre>
-setTimeout(function(){
-	console.log(1)
-},1000)
-
-function * sun() {
-	yield fn()
+宏任务（同步）：{
+  宏列队：1 4
+  微列队：
 }
 
-var fn = function () {
-	setTimeout(()=>{
-		console.log(2)
-	}, 1000)
+宏任务（异步：setTimeout 1000）：{
+  宏列队：2
+  微列队：
 }
 
-var sunG = sun();
-sunG.next()
-
-console.log(3);
+宏任务（异步：setTimeout 2000）：{
+  宏列队：3
+  微列队：
+}
 </pre>
-执行结果为：3、1、2
+
+定时器还是只看它的执行时间，这样就容易排列任务列队了
+
+执行结果为：1、4、2、3
 
 通过上面的测试我们发现，Generator 函数，如果 yield 语句是同步的，那么就是主线程中执行的同步函数；如果是异步的，那么它的执行更两个因素有关，执行顺序和执行耗时：
 
 - 执行耗时一样的话，上面的先执行
 - 执行耗时不一样的话，耗时小的先执行
 
-其实根本原因还是上面的 “宏任务” 和 “微任务” 的执行顺序。
+其实根本原因还是上面的 【宏任务（同步）】 和 【宏任务（异步）】 的执行顺序。
 
 
-# 总结 #
-- javascript 是一门单线程语言
-- Event Loop 是 javascript 的执行机制（分为宏任务和微任务）
+## async 和 awiate ##
+async 它是 Generator 函数的语法糖，代表里面有异步程序。同时 async 函数的调用会立即返回一个 Promise() 对象。
+
+async函数完全可以看作多个异步操作，包装成的一个 Promise 对象，而await命令就是内部then命令的语法糖。
+
+<pre>
+async function sum() {
+  console.log(1);
+  await fn1();
+  await console.log(99);
+  console.log(100)
+}
+
+function fn1() {
+  return new Promise((resolve, reject) => {
+    console.log(2);
+    resolve();
+  }).then(() => {
+    console.log(3);
+  });
+}
+
+sum();
+
+setTimeout(() => {
+  console.log(4);
+}, 1000);
+
+console.log(5);
+</pre>
+
+解析：
+
+<pre>
+宏任务（同步）：{
+  宏列队：1 2 5
+  微列队：3 99 100
+}
+
+宏任务（异步 setTimeout 1000）：{
+  宏列队：4
+  微列队：
+}
+</pre>
+
+上面有个疑惑的点，就是 await 应该是 Promise 对象 then 的语法糖，按道理来说，await 的执行应该在【微列队】里面，但第一个执行的 await 并没有体现出来，而是直接放在了【宏列队】里面，从第二个开始才把它都放到【宏任务（同步）】里面的【微列队】里面，而且 await 之后的代码，如果是同步的，都在【宏任务（同步）】里面的【微列队】里面；如果是异步的，那就要放到【宏任务（异步）】里面去在执行
+
+<pre>
+async function sum() {
+  console.log(1);
+  await fn1();
+  await fn2();
+  console.log(99);
+}
+
+function fn1() {
+  return new Promise((resolve, reject) => {
+    console.log(2);
+    resolve();
+  }).then(() => {
+    console.log(3);
+  });
+}
+
+function fn2() {
+  return new Promise((resolve, reject) => {
+    console.log(4);
+    resolve();
+  }).then(() => {
+    console.log(5);
+  });
+}
+
+new Promise((resolve, reject) => {
+  console.log(6);
+  resolve();
+}).then(() => {
+  console.log(7);
+});
+
+setTimeout(() => {
+  console.log(9);
+}, 0);
+
+sum();
+
+console.log(10);
+</pre>
+
+从上面可以看出，async 返回了一个 Promise，然后马上执行它的代码，它的第一个 await 被放入了【宏任务（同步）】里面执行；而之后的 await 被放入了【宏任务（异步）】里面去执行，并且执行权要远高于所有的定时器
+
+解析过程：
+
+<pre>
+宏任务（同步）：{
+  宏列队：6 1 2 10
+  微列队：7 3
+}
+
+宏任务（异步 第二个 await）：{
+  宏列队：4
+  微列队：5
+}
+
+宏任务（异步 第二个 await 之后）：{
+  宏列队：99
+  微列队：
+}
+
+宏任务（异步 setTimeout 0）：{
+  宏列队：9
+  微列队：
+}
+</pre>
 
 
+## 总结 ##
+1. 先区分出【宏任务（同步）】和【宏任务（异步）】；【宏任务（同步）】先执行完成后在执行【宏任务（异步）】
+2. 【宏任务（同步、异步）】的任务里面，在区分【宏列队】和【微列队】；【宏列队】执行完成后在执行【微列队】
+3. 定时器添加进入宏任务执行列队的顺序是按照它的时间来排列的
+4. 对于特殊的 async 函数的第一个 await 会被放入【宏任务（同步）】里面执行，后面的都会放入【宏任务（异步）】里面去执行
 
+<pre>
+宏任务（同步）：{ 
+  宏列队：
+  微列队：
+}
 
+宏任务（异步1：）：{
+  宏列队：
+  微列队：
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+宏任务（异步2：）：{
+  宏列队：
+  微列队：
+}
+</pre>

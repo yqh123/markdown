@@ -2,6 +2,7 @@
 > 如何区分深拷贝与浅拷贝，简单点来说，就是假设B复制了A，当修改A或者B时，看A或者B是否相互影响，如果相互影响，说明这是浅拷贝，如果都没有影响，那就是深拷贝。
 > 
 > 在js中，对于非基本类型数据（普通对象或数组），浅拷贝只是拷贝了内存地址，子类属性指向父类属性的内存地址，而子类修改后父类也会被修改。
+> 而基本类型（数字、字符串、布尔值、null、undefaild），都属于深拷贝
 > 
 > 为什么要了解深浅拷贝，因为在多人协作处理同一数据时，你操作这个数据的时候，不能影响其他人。例如后台返回了一堆数据，你需要对这堆数据做操作，但多人开发情况下，你是没办法明确这堆数据是否有其它功能也需要使用，直接修改可能会造成隐性问题，所以这个时候，你对数据的修改就需要先拷贝下来，并且修改你的数据的时候，不能影响原有数据。
 
@@ -9,7 +10,7 @@
 ## 数组的深拷贝 ##
 <pre>
 var a = [1,2,3]
-var b = a.slice()	
+var b = a.slice() // 或者使用 es6语法：var b = [...a];
 
 b[0] = 4
 
@@ -44,8 +45,7 @@ console.log(b)	// [{num: 3}, {num: 2}]
 
 <pre>
 var a = [1,2,[3,4]]
-var b = JSON.stringify(a)
-	b = JSON.parse(b)
+var b = JSON.parse(JSON.stringify(a))
 
 b[2][0] = 5
 
@@ -60,8 +60,8 @@ console.log(b)	// [1,2,[5,4]]
 上面说了数组的深拷贝，现在来说一下json对象的深拷贝
 <pre>
 var a = {
-	name: '小明',
-	age: 20
+  name: '小明',
+  age: 20
 }
 
 var b = Object.assign({}, a)
@@ -76,8 +76,8 @@ console.log(b)	// {name: "小红", age: 20}
 
 <pre>
 var a = {
-	name: '小明',
-	add: {ct: '杭州市-江干区'}
+  name: '小明',
+  add: {ct: '杭州市-江干区'}
 }
 
 var b = Object.assign({}, a)
@@ -93,8 +93,8 @@ console.log(b)	// {name: "小红", add: {ct: '上海市-虹桥区'}}
 
 <pre>
 var a = {
-	name: '小明',
-	add: {ct: '杭州市-江干区'}
+  name: '小明',
+  add: {ct: '杭州市-江干区'}
 }
 
 var b = JSON.parse( JSON.stringify(a) )
@@ -110,11 +110,11 @@ console.log(b)	// {name: "小红", add: {ct: '上海市-虹桥区'}}
 
 <pre>
 var a = {
-	name: '小明',
-	add: {ct: '杭州市-江干区'},
-	sex: function () {
-		return '男'
-	}
+  name: '小明',
+  add: {ct: '杭州市-江干区'},
+  sex: function () {
+    return '男'
+  }
 }
 
 var b = JSON.parse( JSON.stringify(a) )
@@ -133,37 +133,39 @@ console.log(b.sex) 	// undefined
 # 简单封装下深拷贝函数 #
 <pre>
 function extend(obj) {
-	var newObj
-	// obj属性只能是数组和对象
-	if (obj && typeof obj !== 'function' && typeof obj === 'object') {
-		newObj = JSON.parse( JSON.stringify(obj) )
-	} else {
-		newObj = obj
-	}
-	return newObj
+  var newObj
+  // obj属性只能是数组和对象
+  if (obj && typeof obj !== 'function' && typeof obj === 'object') {
+    newObj = JSON.parse( JSON.stringify(obj) )
+  } else {
+    newObj = obj
+  }
+  return newObj
 }
 </pre>
 
 
 # 关于JSON.parse(JSON.stringify(obj))实现深拷贝应该注意的坑 #
-JSON.parse(JSON.stringify(obj))我们一般用来深拷贝，其过程说白了 就是利用JSON.stringify 将js对象序列化（JSON字符串），再使用JSON.parse来反序列化(还原)js对象；序列化的作用是存储(对象本身存储的只是一个地址映射，如果断电，对象将不复存在，因此需将对象的内容转换成字符串的形式再保存在磁盘上 )和传输（例如 如果请求的Content-Type是 application/x-www-form-urlencoded，则前端这边需要使用JSON.stringify(data)来序列化参数再传给后端，否则后端接受不到；<br>
-Content-Type 为 application/json;charset=UTF-8或者 multipart/form-data 则可以不需要  ）；<br>
+JSON.parse(JSON.stringify(obj))我们一般用来深拷贝，其过程说白了 就是利用JSON.stringify 将js对象序列化（JSON字符串），再使用JSON.parse来反序列化(还原)js对象；序列化的作用是存储(对象本身存储的只是一个地址映射，如果断电，对象将不复存在，因此需将对象的内容转换成字符串的形式再保存在磁盘上 )和传输（例如 如果请求的Content-Type是 application/x-www-form-urlencoded，则前端这边需要使用JSON.stringify(data)来序列化参数再传给后端，否则后端接受不到；
+
+Content-Type 为 application/json;charset=UTF-8或者 multipart/form-data 则可以不需要  ）；
+
 我们在使用 JSON.parse(JSON.stringify(obj))时应该注意以下几点：
 
-**1、如果obj里面有时间对象，则JSON.stringify后再JSON.parse的结果，时间将只是字符串的形式。而不是时间对象**<br>
+**1、如果obj里面有时间对象，则JSON.stringify后再JSON.parse的结果，时间将只是字符串的形式。而不是时间对象**
 
-**2、如果obj里有RegExp、Error对象，则序列化的结果将只得到空对象**<br>
+**2、如果obj里有RegExp、Error对象，则序列化的结果将只得到空对象**
 
 **3、如果obj里有函数，undefined，则序列化的结果会把函数或 undefined 丢失**
 
 **4、如果obj里有NaN、Infinity和-Infinity，则序列化的结果会变成null**
 
-**5、JSON.stringify()只能序列化对象的可枚举的自有属性，例如 如果obj中的对象是有构造函数生成的，则使用 JSON.parse(JSON.stringify(obj)) 深拷贝后，会丢弃对象的constructor**
+**5、JSON.stringify()只能序列化对象的可枚举的自有属性，例如obj中的对象是有构造函数生成的，则使用 JSON.parse(JSON.stringify(obj)) 深拷贝后，会丢弃对象的constructor**
 
 **6、如果对象中存在循环引用的情况也无法正确实现深拷贝**
 
 
-# 封装真正的深拷贝函数 #
+# 封装一个简单的深拷贝函数 #
 综合上面所有的关于深拷贝的问题，做下面的函数封装<br>
 如果拷贝的对象不涉及上面讲的情况，可以直接使用 JSON.parse(JSON.stringify(obj))<br>
 但是涉及到上面的情况，可以考虑使用如下方法实现深拷贝：<br>
@@ -199,7 +201,7 @@ function deepClone(data){
   } else if(type === 'object'){
     obj = {};
   } else {
-    //不再具有下一层次
+    // 不再具有下一层次
     return data;
   }
   if(type === 'array'){
@@ -215,4 +217,4 @@ function deepClone(data){
 }
 </pre>
 
-
+要使用完整的深拷贝，可以借助一些库提供的深拷贝方法
