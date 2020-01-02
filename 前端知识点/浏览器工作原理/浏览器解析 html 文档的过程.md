@@ -7,14 +7,30 @@
 
 那么浏览器如何判定采用哪种模式渲染呢？实际上浏览器在渲染页面之前会先检查两个内容，一个是页面是否有 DOCTYPE（文档声明） 信息；另外一个是页面是否有 x-ua-compatible（这个是 IE8 专有的一个 meta 标签的属性，可以指定浏览器以怎样的模式渲染） 信息。
 
+<pre>
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+  &lt;head&gt;
+    &lt;meta charset=&quot;UTF-8&quot; /&gt;
+    &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot; /&gt;
+    &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;ie=edge&quot; /&gt;
+    &lt;title&gt;Document&lt;/title&gt;
+  &lt;/head&gt;
+  &lt;body&gt;&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+
+上面就是一个典型的采用标准的 html5 规范的页面
+
 来看一个强制采用怪异盒模型渲染的样式：
+
 <pre>
 div {
-	width: 100%;
-	height: 100px;
-	padding: 20px;
-	background: #eee;
-	box-sizing: border-box;	/* 启用怪异盒模型 */
+  width: 100%;
+  height: 100px;
+  padding: 20px;
+  background: #eee;
+  box-sizing: border-box;	/* 启用怪异盒模型 */
 }
 </pre>
 
@@ -26,9 +42,9 @@ div {
 
 
 ## 1、纯 HTML 文档，无 CSS 和 JS ##
-如果 HTML 文档只有 html，没有 css 和 js 脚本的话，解析过程很简单。
+如果 HTML 文档没有 css 和 js 脚本的话，解析过程很简单。
 
-**过程：**浏览器解析 HTML ---> 构建 DOM 树 ---> 触发 onload 事件 ---> 构建 render 树 ---> 布局和绘制页面
+**过程**：浏览器解析 HTML ---> 构建 DOM 树 ---> 触发 onload 事件 ---> 构建 render 树 ---> 布局和绘制页面
 
 
 ## 2、包含内联样式和内联脚本的 HTML 文档 ##
@@ -46,7 +62,7 @@ div {
   &lt;/script&gt;
 &lt;/head&gt;
 &lt;body&gt;
-	&lt;div&gt;&lt;/div&gt;
+  &lt;div&gt;&lt;/div&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </pre>
@@ -83,7 +99,7 @@ HTML 文档中对于图片，音频、视频等资源的加载并不会阻塞页
   &lt;script src=&quot;/javascripts/application.js&quot;&gt;&lt;/script&gt;
 &lt;/head&gt;
 &lt;body&gt;
-	&lt;div&gt;&lt;/div&gt;
+  &lt;div&gt;&lt;/div&gt;
 &lt;/body&gt;
 &lt;/html&gt;
 </pre>
@@ -93,7 +109,7 @@ HTML 文档中对于图片，音频、视频等资源的加载并不会阻塞页
 
 
 # 总结 #
-1. 确定浏览器渲染模式（标签模式还是怪异模式）：通过 DOCTYPE 或者 x-ua-compatible（IE8专用）
+1. 确定浏览器渲染模式（标签模式还是非标准模式）：通过 DOCTYPE 或者 x-ua-compatible（IE8专用）
 2. 确定标码格式比如：meta charset="UTF-8"
 3. 解析 CSS 样式：不管是内联样式还是外部资源，都不会阻塞页面解析
 4. 解析 JS 脚本：不管是内联脚本还是外部资源，都会阻塞页面解析，并且它还要等待 CSS 解析完成后，才会移交给 JS 引擎处理，JS 引擎处理完后，在继续解析 HMTL 文档。
