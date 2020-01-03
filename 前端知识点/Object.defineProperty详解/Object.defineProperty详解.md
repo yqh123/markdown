@@ -105,8 +105,26 @@ console.log(a === 1 && a === 2); // true
 ## 双向数据绑定 ##
 可以查看这篇文章：[https://segmentfault.com/a/1190000015427628](https://segmentfault.com/a/1190000015427628 "双向数据绑定")
 
+<img src="./img1.png" width="100%" />
+
+下面是整个流程图：
+
+<img src="./img2.png" width="100%" />
+
+vue 的 compile 模块会解析我们的 template（html页面）模块，把它解析成一系列的 watcher，也称为“更新函数。
+
+当然一个页面或者一个项目中肯定有很多 watcher，因此 Vue 使用了 Dep 这个对象来存储每一个watcher，当数据发生变更，Observer（Object.defineProperty） 会调用 Dep 的 notify 方法以通知所有订阅了该数据的 watcher，让它们更新数据，举个栗子：
+
+<pre>
+&lt;input v-model=&quot;message&quot;&gt;
+</pre>
+
+Compile会解析出 v-moel 这个指令并且生成 watcher 并连接数据中的 message 和当前这个Dom对象，一旦收到这个message被变更的通知，watcher就会根据变更对这个Dom进行重新渲染。
+
+**双向数据绑定原来如下：**
+
 1. 数据劫持：是对数据对象的 Setter 和 Getter 实现的劫持。
-2. 发布-订阅模式：当监控的数据对象被更改后，这个变更会被广播给所有订阅该数据的watcher，然后由该 watcher 实现对页面的重新渲染。
+2. 发布-订阅模式：当监控的数据对象被更改后，这个变更会被广播给所有订阅该数据的 watcher，然后由该 watcher 实现对页面的重新渲染。
 
 **订阅/发布模式：观察者模式**
 
@@ -114,6 +132,7 @@ console.log(a === 1 && a === 2); // true
 
 
 下面是一个简化版的 订阅/发布模式：
+
 <pre>
 // 发布者
 let publisher = {
@@ -136,15 +155,13 @@ let publisher = {
   // 取消订阅
   unSubscribe: function(type, name) {
     if (Object.keys(this.registration).includes(type)) {
-      let index = -1;
-      this.registration[type].forEach(function(func, idx) {
-        if (func.name === name) {
-          index = idx;
+      this.registration[type].forEach((item, index) => {
+        if (Object.is(item.name) === Object.is(name)) {
+          this.registration[type].splice(index, 1);
         }
       });
-      index > -1 ? this.registration[type].splice(index, 1) : null;
     } else {
-      throw new ReferenceError("对不起，你没有订阅该项服务！");
+      console.error(`您好尊贵的 ${name}：您没有订阅该消息`);
     }
   },
 
@@ -193,119 +210,190 @@ publisher.publish("type3", "我是发布者发布的消息 3！");
 </pre>
 
 
-**模拟vue的双向数据绑定**
+## 模拟vue的双向数据绑定 ##
 
+**1、首先是 Html**
 <pre>
-// html 结构
-&lt;h1 id=&quot;h1&quot;&gt;&lt;/h1&gt;
-&lt;input type=&quot;text&quot; id=&quot;inp&quot; onkeyup=&quot;inputChange(event)&quot; /&gt;
-&lt;input type=&quot;button&quot; value=&quot;加&quot; onclick=&quot;btnAdd()&quot; /&gt;
+&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;en&quot;&gt;
 
-// 数据源
+&lt;head&gt;
+  &lt;meta charset=&quot;UTF-8&quot;&gt;
+  &lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+  &lt;meta http-equiv=&quot;X-UA-Compatible&quot; content=&quot;ie=edge&quot;&gt;
+  &lt;title&gt;Object.defineProperty实现双向绑定&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body&gt;
+  &lt;h1 id=&#x27;h1&#x27;&gt;&lt;/h1&gt;
+  &lt;input type=&quot;text&quot; id=&quot;inp&quot; onkeyup=&quot;inputChange(event)&quot;&gt;
+  &lt;input type=&quot;button&quot; value=&quot;加&quot; onclick=&quot;btnAdd()&quot; /&gt;
+&lt;/body&gt;
+  &lt;script src=&quot;./index.js&quot;&gt;&lt;/script&gt;
+&lt;/html&gt;
+</pre>
+
+**2、然后是 index.js** 
+
+1) 首先我们先定义一个数据源
+<pre>
 let vm = {
   value: 0
-};
+}
+</pre>
 
-// 定义一个Dep，用于存储watcher
+2) 然后定义一个 Dep，用于存储watcher（收集所有的订阅者，并通知所有的订阅者接受消息，它就相当于发布者）
+<pre>
 let Dep = function() {
-  let list = [];
+  this.list = [];
   this.add = function(watcher) {
-    list.push(watcher);
+    this.list.push(watcher);
   };
   this.notify = function(newValue) {
-    list.forEach(function(fn) {
+    this.list.forEach(fn => {
       fn(newValue);
     });
   };
 };
+</pre>
 
-// 模拟 vue 的 compile，通过对 Html 的解析生成一系列订阅者（watcher）
+3) 模拟 Compile 解析 html 出来的 watchers，该 demo 涉及到两个地方的重新 render，一个是title，另一个是输入框。所以写两个watcher，然后存入Dep
+<pre>
+// 模拟Compile,通过对Html的解析生成一系列订阅者（watcher）
 function renderInput(newValue) {
   let el = document.getElementById("inp");
-  if (el) {
-    el.value = newValue;
-  }
+  if (el) el.value = newValue;
 }
 
-function renderTitle1(newValue) {
+function renderTitle(newValue) {
   let el = document.getElementById("h1");
-  if (el) {
-    el.innerHTML = newValue;
-  }
+  if (el) el.innerHTML = newValue;
 }
 
-// 将解析出来的watcher存入Dep中待用
+// 将解析出来的 watcher 存入Dep中待用
 let dep = new Dep();
 dep.add(renderInput);
-dep.add(renderTitle1);
+dep.add(renderTitle);
+</pre>
 
-// 使用 Object.defineProperty 定义一个 Observer
+4) 使用 Object.defineProperty 定义一个 observer
+<pre>
 function observer(vm, key, value) {
   Object.defineProperty(vm, key, {
-    enumerable: true,
-    configurable: true,
     get: function() {
-      console.log("Get");
       return value;
     },
     set: function(newValue) {
       if (value !== newValue) {
         value = newValue;
-        console.log("Update");
+        dep.notify(newValue);
+      }
+    }
+  });
+}
+</pre>
 
-        //将变动通知给相关的订阅者
+5) 再将页面使用的两个方法写出来。(Vue使用的是指令对事件进行绑定，但是本文不涉及指令，所以用最原始的方法绑定事件)
+<pre>
+function inputChange(e) {
+  let value = e.target.value;
+  vm.value = value;
+}
+
+function btnAdd() {
+  ++vm.value;
+}
+</pre>
+
+6）主要的代码都写好后，下面第一件事就是初始化
+<pre>
+// 数据初始化方法
+Object.keys(vm).forEach(key => {
+  observer(vm, key, vm[key]);
+});
+
+// 初始化页面，将数据源渲染到UI
+dep.notify(vm.value);
+</pre>
+
+这样一个简单的基于 Object.defineProperty 的双向数据绑定就完成了。
+
+
+----------
+
+
+【整体代码如下】：
+
+<pre>
+// 数据源
+const vm = {
+  value: 0
+};
+
+// Dep 用于存储 watcher（收集所有的订阅者，并通知所有的订阅者接受消息，它就相当于发布者）
+let Dep = function() {
+  this.list = [];
+  this.add = function(watcher) {
+    this.list.push(watcher);
+  };
+  this.notify = function(newValue) {
+    this.list.forEach(fn => {
+      fn(newValue);
+    });
+  };
+};
+
+// 模拟Compile出来的watchers，该demo涉及到两个地方的重新render，一个是title，另一个是输入框。所以写两个watcher，然后存入Dep
+// 模拟Compile,通过对Html的解析生成一系列订阅者（watcher）
+function renderInput(newValue) {
+  let el = document.getElementById("inp");
+  if (el) el.value = newValue;
+}
+
+function renderTitle(newValue) {
+  let el = document.getElementById("h1");
+  if (el) el.innerHTML = newValue;
+}
+
+// 将解析出来的 watcher 存入Dep中待用
+let dep = new Dep();
+dep.add(renderInput);
+dep.add(renderTitle);
+
+// 使用 Object.defineProperty 定义一个 observer
+function observer(vm, key, value) {
+  Object.defineProperty(vm, key, {
+    get: function() {
+      return value;
+    },
+    set: function(newValue) {
+      if (value !== newValue) {
+        value = newValue;
         dep.notify(newValue);
       }
     }
   });
 }
 
-//页面引用的方法
-function inputChange(ev) {
-  let value = Number.parseInt(ev.target.value);
-  vm.value = Number.isNaN(value) ? 0 : value;
+// 主要的代码都写好后，下面第一件事就是初始化
+function init() {
+  // 数据初始化方法
+  Object.keys(vm).forEach(key => {
+    observe(vm, key, vm[key]);
+  });
+	
+  // 初始化页面，将数据源渲染到UI
+  dep.notif(vm.value);
+}
+init();
+
+// 再将页面使用的两个方法写出来(Vue使用的是指令对事件进行绑定，但是这里不涉及指令，所以用最原始的方法绑定事件)
+function inputChange(e) {
+  let value = e.target.value;
+  vm.value = value;
 }
 
 function btnAdd() {
-  vm.value = vm.value + 1;
+  ++vm.value;
 }
-
-//数据初始化方法
-function initMVVM(vm) {
-  Object.keys(vm).forEach(function(key) {
-    observer(vm, key, vm[key]);
-  });
-}
-
-//初始化数据源
-initMVVM(vm);
-
-//初始化页面，将数据源渲染到UI
-dep.notify(vm.value);
 </pre>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
