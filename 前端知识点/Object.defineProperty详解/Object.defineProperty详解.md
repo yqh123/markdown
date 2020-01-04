@@ -397,3 +397,69 @@ function btnAdd() {
   ++vm.value;
 }
 </pre>
+
+【我们可以使用更加清楚的注释来看下】：
+
+<pre>
+// 数据源
+const vm = {
+  value: 0
+};
+
+// 订阅者（也就是更新函数）
+let oText = function(value) {
+  let el = document.getElementById("h1");
+  el.innerHTML = value;
+};
+let oInput = function(value) {
+  let el = document.getElementById("input");
+  el.value = value;
+};
+
+// 发布者（收集订阅者和发布消息）
+let publisher = {
+  list: [],
+  add: function(fn) {
+    this.list.push(fn);
+  },
+  notify: function(value) {
+    this.list.forEach(fn => {
+      fn(value);
+    });
+  }
+};
+
+// 订阅者--订阅消息
+publisher.add(oText);
+publisher.add(oInput);
+
+// 使用数据劫持来监听数据变动，然后通知发布者发布者发布消息
+let obServe = function(vm, key, value) {
+  Object.defineProperty(vm, key, {
+    get: function() {
+      return value;
+    },
+    set: function(newValue) {
+      value = newValue;
+      publisher.notify(newValue); // 发布者发布消息
+    }
+  });
+};
+
+// 初始化
+function init() {
+  Object.keys(vm).forEach(key => {
+    obServe(vm, key, vm[key]);
+  });
+  publisher.notify(vm.value);
+}
+init();
+
+// 触发事（数据变更，通知发布者该发布消息了）
+function inputChange(e) {
+  vm.value = e.target.value;
+}
+function btnAdd(e) {
+  ++vm.value;
+}
+</pre>

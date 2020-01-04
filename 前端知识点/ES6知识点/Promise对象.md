@@ -336,6 +336,107 @@ promise.then((value)=&gt;{
 查看文章：[https://segmentfault.com/a/1190000012664201](https://segmentfault.com/a/1190000012664201 "promise 原理")
 
 
+【这是一个简化版的实现过程】：只实现了简单的 then 和 catch 方法
+
+<pre>
+const SPENING = "SPENING";
+const RESOLVE = "RESOLVE";
+const REJECT = "REJECT";
+const isFunction = variable => typeof variable === "function";
+
+class MyPromise {
+  constructor(handle) {
+    this._status = SPENING;
+    this._value = undefined;
+
+    if (isFunction(handle)) {
+      handle(this._resolve.bind(this), this._reject.bind(this));
+    } else {
+      throw new ReferenceError("请传人函数作为 MyPromise 参数");
+    }
+  }
+
+  // 添加成功方法
+  _resolve(value) {
+    if (this._status === SPENING) {
+      this._status = RESOLVE;
+      this._value = value;
+    }
+  }
+
+  // 添加失败方法
+  _reject(value) {
+    if (this._status === SPENING) {
+      this._status = REJECT;
+      this._value = value;
+    }
+  }
+
+  // 添加then方法
+  then(resolveFn, rejectFn) {
+    const { _value, _status } = this;
+    return new MyPromise((resolveFnNext, rejectFnNext) => {
+      let fulfilled = value => {
+        try {
+          if (!isFunction(resolveFn)) {
+            resolveFnNext(value);
+          } else {
+            let res = resolveFn(value);
+            resolveFnNext(res);
+          }
+        } catch (error) {
+          rejectFnNext(error);
+        }
+      };
+
+      let rejected = value => {
+        try {
+          if (!isFunction(rejectFn)) {
+            rejectFnNext(value);
+          } else {
+            let res = rejectFn(value);
+            rejectFnNext(res);
+          }
+        } catch (error) {
+          rejectFnNext(error);
+        }
+      };
+
+      switch (_status) {
+        case RESOLVE:
+          fulfilled(_value);
+          break;
+        case REJECT:
+          rejected(_value);
+          break;
+      }
+    });
+  }
+
+  // 添加catch方法
+  catch(onRejected) {
+    return this.then(undefined, onRejected);
+  }
+}
+
+let person = new MyPromise(function(resolve, reject) {
+  console.log("立即执行");
+  resolve(1);
+})
+  .then(val => {
+    console.log(val);
+    return 2;
+  })
+  .then(val => {
+    console.log(val);
+  })
+  .catch(error => {
+    console.log(error);
+  });
+</pre>
+
+【完整版实现过程】：
+
 <pre>
 // 判断变量否为function
 const isFunction = variable => typeof variable === 'function'
