@@ -2,6 +2,7 @@
 - 父子组件如何通信
 - 祖孙组件如何通信
 - 兄弟组件如何通信
+- 父子组件之间的广播
 
 【解决方案】：
 
@@ -217,6 +218,7 @@ export default {
 
 - $attrs
 - $listeners
+- provide、inject
 
 ## $attrs
 包含了父作用域中不作为 prop 被识别 (且获取) 的特性绑定。当一个组件没有声明任何 prop 时，这里会包含所有父作用域的绑定，并且可以通过 v-bind="$attrs" 传入内部组件——在创建高级别的组件时非常有用。
@@ -401,9 +403,121 @@ export default {
 }
 ```
 
+## provide 和 inject使用
+provide 和 inject使用场景也是组件传值，尤其是祖父组件--孙组件等有跨度的组件间传值，单向传值（由provide的组件传递给inject的组件）。
+
+provide 选项应该是一个对象或返回一个对象的函数。该对象包含可注入其子孙的属性。
+
+inject 通常是一个字符串数组。
+
+但是他们不是响应式的，也就是通过 provide 设定的数据，不具备响应更新机制，如果需要达到响应更新的机制，需要对他进行改造，下面会讲到。
+
+【非响应模式】：
+
+**祖父组件 grandpaDom.vue**
+
+```
+<template>
+  <div>
+    <father-dom />
+  </div>
+</template>
+<script>
+import fatherDom from "./fatherDom.vue";
+export default {
+  provide: {
+    fooNew: "bar"
+  },
+  data() {
+    return {};
+  },
+  components: { fatherDom },
+  methods: {}
+};
+</script>
+```
+
+**父亲组件 fatherDom.vue**
+
+```
+<template>
+  <div>
+    <child-dom />
+  </div>
+</template>
+<script>
+import childDom from "./childDom.vue";
+export default {
+  name: "father-dom",
+  components: { childDom }
+};
+</script>
+```
+
+**孙组件 childDom.vue**
+
+```
+<template>
+  <div>
+    <p>fooNew：{{fooNew}}</p>
+  </div>
+</template>
+<script>
+export default {
+  name: "childDom",
+  inject: ["fooNew"],
+  methods: {}
+};
+</script>
+```
+
+由上面的代码可以看到，在祖父组件上用 provide 定义的数据，在它的任何孙组件上，都可以使用 inject 来获取并使用。
+
+但需要注意的是，数据是默认不具备响应更新的，也就是说，你通过 this._provided.fooNew 去修改了原来的值，但子孙组件通过 inject 获取到的 fooNew 值并没有更新。
+
+如果想用 provide 设定的数据具备响应式，那么需要这样做：
+
+【响应模式】：
+
+**祖父组件 grandpaDom.vue**
+
+```
+<script>
+export default {
+  provide: function() {
+    return {
+      fooNew: () => this.fooNew
+	}
+  },
+  data() {
+    return {
+      fooNew: "bar"
+    }
+  }
+};
+</script>
+```
+
+**在其他子孙组件中**
+
+```
+<template>
+  <div>
+    <p>fooNew：{{fooNew()}}</p>
+  </div>
+</template>
+<script>
+export default {
+  inject: ["fooNew"]
+};
+</script>
+```
+
 
 # 兄弟组件之间的通信
 如果是兄弟组件之间的通信，采用了上面的常规的通信方式，比如 emit，这样会让组件之间的代码变得很复杂而且容易出错。所以 Vue 提供了方便兄弟组件之间通信的方法。
+
+或者你也可以通过变通的方式，比如把兄弟组件共用的数据，都放到父组件身上，然后通过父组件数据的改变来达到兄弟组件的改变。
 
 - eventBus
 - Vuex
@@ -531,6 +645,127 @@ Vue.use({
 
 ## Vuex
 也称为状态管理，主要是用来管理公共数据的，比如用户信息等
+
+
+
+# 父子组件之间的广播
+主要用在组件库内部去使用，它可以通过广播的方式，向下或者向上去传递自己的数据到所有的子孙组件或者所有的父组件。
+
+- 注入：dispatch（递归获取 $parent，在通过 this.$emit(eventName, data) 向子孙组件注入数据）
+- 广播：boardcast（递归获取 $children，在通过 this.$emit(eventName, data) 去广播所有的子孙组件）
+
+## 实现原理
+main.js
+
+```
+Vue.config.productionTip = false
+
+// 【向上】传递数据
+Vue.prototype.$dispatch = function (eventName, data) {
+  let parent = this.$parent
+  while(parent) {
+    parent.$emit(eventName, data)
+    parent = parent.$parent
+  }
+}
+
+// 【向下】传递数据
+Vue.prototype.$boardcast = function (eventName, data) {
+  boardcast.call(this, eventName, data)
+}
+
+// 辅助递归方法
+function boardcast(eventName, data) {
+  this.$children.forEach(child => {
+    child.$emit(eventName, data)
+    if (child.$children.length) {
+      boardcast.call(child, eventName, data)
+    }
+  })
+}
+```
+
+
+**$boardcast：**
+
+父组件，广播事件和发送数据到所有的子孙组件：
+
+```
+<button type="button" @click="boardcastHandle">往下，广播所有的子孙组件</button>
+
+export default {
+  methods: {
+      boardcastHandle() {
+          this.$boardcast('boardcastEvent', '父组件广播的数据')
+      }
+  }
+}
+```
+
+子孙组件监听广播事件：
+
+```
+export default {
+  mounted() {
+    this.$on('boardcastEvent', function (data) {
+        console.log(data)
+    })
+  }
+}
+```
+
+
+**$dispatch：**
+
+子孙组件，广播事件和通知所有的父组件接收数据：
+
+```
+<button type="button" @click="dispatchHandle">往上，广播给所有的父组件</button>
+
+export default {
+  methods: {
+      dispatchHandle() {
+          this.$emit('dispatchEvent', '子孙组件广播的数据')
+      }
+  }
+}
+```
+
+父组件监听广播事件：
+
+```
+export default {
+  mounted() {
+    this.$on('dispatchEvent', function (data) {
+        console.log(data)
+    })
+  }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
