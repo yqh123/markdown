@@ -2,7 +2,8 @@
 - 父子组件如何通信
 - 祖孙组件如何通信
 - 兄弟组件如何通信
-- 父子组件之间的广播
+- 所有组件的全局通信
+- 组件之间的广播
 
 【解决方案】：
 
@@ -219,6 +220,7 @@ export default {
 - $attrs
 - $listeners
 - provide、inject
+- 也可以采用组件广播
 
 ## $attrs
 包含了父作用域中不作为 prop 被识别 (且获取) 的特性绑定。当一个组件没有声明任何 prop 时，这里会包含所有父作用域的绑定，并且可以通过 v-bind="$attrs" 传入内部组件——在创建高级别的组件时非常有用。
@@ -403,8 +405,8 @@ export default {
 }
 ```
 
-## provide 和 inject使用
-provide 和 inject使用场景也是组件传值，尤其是祖父组件--孙组件等有跨度的组件间传值，单向传值（由provide的组件传递给inject的组件）。
+## provide 和 inject 使用
+provide 和 inject 使用场景也是组件传值，尤其是祖父组件--孙组件等有跨度的组件间传值，单向传值（由 provide 的组件传递给 inject 的组件）
 
 provide 选项应该是一个对象或返回一个对象的函数。该对象包含可注入其子孙的属性。
 
@@ -422,6 +424,7 @@ inject 通常是一个字符串数组。
     <father-dom />
   </div>
 </template>
+
 <script>
 import fatherDom from "./fatherDom.vue";
 export default {
@@ -445,6 +448,7 @@ export default {
     <child-dom />
   </div>
 </template>
+
 <script>
 import childDom from "./childDom.vue";
 export default {
@@ -462,6 +466,7 @@ export default {
     <p>fooNew：{{fooNew}}</p>
   </div>
 </template>
+
 <script>
 export default {
   name: "childDom",
@@ -506,6 +511,7 @@ export default {
     <p>fooNew：{{fooNew()}}</p>
   </div>
 </template>
+
 <script>
 export default {
   inject: ["fooNew"]
@@ -515,14 +521,16 @@ export default {
 
 
 # 兄弟组件之间的通信
-如果是兄弟组件之间的通信，采用了上面的常规的通信方式，比如 emit，这样会让组件之间的代码变得很复杂而且容易出错。所以 Vue 提供了方便兄弟组件之间通信的方法。
+如果是兄弟组件之间的通信，采用了上面的常规的通信方式，比如 emit，这样会让组件之间的代码变得很复杂而且容易出错。这时候你可以通过变通的方式，比如把兄弟组件共用的数据，都放到父组件身上，然后通过父组件数据的改变来达到兄弟组件的改变。
 
-或者你也可以通过变通的方式，比如把兄弟组件共用的数据，都放到父组件身上，然后通过父组件数据的改变来达到兄弟组件的改变。
+当然你也可以使用下面要讲到的 eventBus 机制实现兄弟组件之间的通信。
 
+
+# 全局组件通知
 - eventBus
 - Vuex
 
-当然上面说的 $attrs 和 $listeners 也可以作为兄弟组件之间的通信，而且也比较常用，只要把数据都让他们的父组件提供和改变就可以了。
+该方法主要是用在通知所有组件
 
 
 ## eventBus
@@ -579,7 +587,7 @@ export default {
 <script>
 export default {
   name: 'Acom',
-  created() {
+  mounted() {
   	// 接收到父组件 Allcom 传递过来的数据
 	this.$root.$on('queryAll', (val) => {
 		console.log(val)
@@ -613,7 +621,7 @@ export default {
       content: ''
     }
   },
-  created() {
+  mounted() {
   	// 这个是父组件 Allcom 传递的数据
   	this.$root.$on('queryAll', (val) => {
       this.content = val
@@ -642,13 +650,44 @@ Vue.use({
 
 然后把各个组件的 this.$root 替换成 this.$eventBus 即可
 
+**【eventBus 实现原理：】**
+
+用法和上面的一样，利用的是【发布/订阅】模式实现：main.js 里面代码如下
+
+```
+class EventBus {
+  constructor() {
+    this.busList = {}	// 这个就是发布者
+  }
+
+  // 发布者---收集订阅者
+  $on(name, callback) {
+    this.busList[name] = this.busList[name] || []
+    this.busList[name].push(callback)
+  }
+
+  // 发布者--通知订阅者
+  $emit(name, data) {
+    if (this.busList[name]) {
+      this.busList[name].forEach(callback => {
+        callback(data)
+      });
+    }
+  }
+}
+
+Vue.prototype.$eventBus = new EventBus();
+```
+
+采用 new Vue() 实现，而不用自己去写这个 EventBus 构造函数，是因为 Vue 构造函数里面已经内部实现了 $emit 和 $on 机制。
+
 
 ## Vuex
 也称为状态管理，主要是用来管理公共数据的，比如用户信息等
 
 
 
-# 父子组件之间的广播
+# 组件之间的广播
 主要用在组件库内部去使用，它可以通过广播的方式，向下或者向上去传递自己的数据到所有的子孙组件或者所有的父组件。
 
 - 注入：dispatch（递归获取 $parent，在通过 this.$emit(eventName, data) 向子孙组件注入数据）
