@@ -1,0 +1,259 @@
+// https://www.sass.hk/docs/
+@charset "utf-8";
+@import './_variables.scss'; // scss 变量文件
+
+// display-* 样式集合
+@each $var in $DISPLAY {
+  .display-#{$var} {
+    display: $var !important;
+  }
+}
+
+// font-size 【字体大小】（最大值为 50）
+@for $var from 0 through map-get($ForEachLength, num50) {
+  .fs-#{$var} {
+    font-size: #{$var}px !important;
+  }
+}
+
+// margin 【外边距】（最大值为 50）
+@for $var from 0 through map-get($ForEachLength, num50) {
+  // 正边距
+  .m-#{$var} {
+    margin: 1px * $var !important;
+  }
+  .m-t-#{$var} {
+    margin-top: 1px * $var !important;
+  }
+  .m-b-#{$var} {
+    margin-bottom: 1px * $var !important;
+  }
+  .m-l-#{$var} {
+    margin-left: 1px * $var !important;
+  }
+  .m-r-#{$var} {
+    margin-right: 1px * $var !important;
+  }
+
+  // 负边距
+  .m-f-#{$var} {
+    margin: -1px * $var !important;
+  }
+  .m-f-t-#{$var} {
+    margin-top: -1px * $var !important;
+  }
+  .m-f-b-#{$var} {
+    margin-bottom: -1px * $var !important;
+  }
+  .m-f-l-#{$var} {
+    margin-left: -1px * $var !important;
+  }
+  .m-f-r-#{$var} {
+    margin-right: -1px * $var !important;
+  }
+}
+
+// padding 【内边距】（最大值为 50）
+@for $var from 0 through map-get($ForEachLength, num50) {
+  // 正边距
+  .p-#{$var} {
+    padding: 1px * $var !important;
+  }
+  .p-t-#{$var} {
+    padding-top: 1px * $var !important;
+  }
+  .p-b-#{$var} {
+    padding-bottom: 1px * $var !important;
+  }
+  .p-l-#{$var} {
+    padding-left: 1px * $var !important;
+  }
+  .p-r-#{$var} {
+    padding-right: 1px * $var !important;
+  }
+
+  // 负边距
+  .p-f-#{$var} {
+    padding: -1px * $var !important;
+  }
+  .p-f-t-#{$var} {
+    padding-top: -1px * $var !important;
+  }
+  .p-f-b-#{$var} {
+    padding-bottom: -1px * $var !important;
+  }
+  .p-f-l-#{$var} {
+    padding-left: -1px * $var !important;
+  }
+  .p-f-r-#{$var} {
+    padding-right: -1px * $var !important;
+  }
+}
+
+// border-radius 【圆角】（最大值为 30）
+@for $var from 0 through map-get($ForEachLength, num30) {
+  .bd-radius-#{$var} {
+    -moz-border-radius: 1px * $var !important;
+    -webkit-border-radius: 1px * $var !important;
+    border-radius: 1px * $var !important;
+  }
+}
+
+// font-size-color 【字体颜色】
+@each $key, $value in $COLOR {
+  .fs-color-#{$key} {
+    color: $value !important;
+  }
+}
+
+// border 【全边框】（最大值为 3）
+@for $width from 0 through map-get($ForEachLength, num3) {
+  @each $style in $BORDER_STYLE {
+    @each $key, $color in $COLOR {
+      .bd-#{$style}-#{$key}-#{$width} {
+        border: {
+          width: 1px * $width !important;
+          style: $style !important;
+          color: $color !important;
+        }
+      }
+    }
+  }
+}
+
+// border 【单边框】（最大值为 3）
+@for $width from 0 through map-get($ForEachLength, num3) {
+  @each $style in $BORDER_STYLE {
+    @each $position in $POSITION_WZ {
+      .bd-#{$position}-#{$style}-#{$width} {
+        border-#{$position}: 1px * $width $style $COLOR_DEFAULT !important;
+      }
+    }
+  }
+}
+
+// border 【边框颜色】
+@each $key, $value in $COLOR {
+  .bd-color-#{$key} {
+    border-color: $value !important;
+  }
+}
+
+// position 【定位方式】
+@each $var in $POSITION_SX {
+  .pis-#{$var} {
+    position: $var !important;
+  }
+}
+
+// position 【定位值】(最大值为 -100 ～ +100)
+@for $num from map-get($ForEachLength, numF100) through map-get($ForEachLength, num100) {
+  @each $wz in $POSITION_WZ {
+    .pis-#{$wz}-#{$num} {
+      #{$wz}: #{$num}px !important;
+    }
+  }
+}
+
+// ellipsis 多行显示省略号...（最大值为 10）
+@for $num from 0 through map-get($ForEachLength, num10) {
+  .text-ellipsis-#{$num} {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: $num !important;
+    overflow: hidden !important;
+  }
+}
+
+// float 【浮动】
+@each $var in $FLOAT {
+  .float-#{$var} {
+    float: $var !important;
+  }
+}
+
+// vertical-align 【对齐方式】
+@each $var in $VERTICAL_ALIGN {
+  .v-a-#{$var} {
+    vertical-align: $var !important;
+  }
+}
+
+// width & height 【宽高集合】（最大值为 -100 ～ +100）
+$percent: 1%;
+@for $num from map-get($ForEachLength, numF100) through map-get($ForEachLength, num100) {
+  @each $unit in $UNIT {
+    @if $unit == 'bfb' {
+      .w-#{$unit}-#{$num} {
+        width: $percent * $num !important;
+      }
+      .h-#{$unit}-#{$num} {
+        height: $percent * $num !important;
+      }
+    } @else {
+      .w-#{$unit}-#{$num} {
+        width: #{$num}#{$unit} !important;
+      }
+      .h-#{$unit}-#{$num} {
+        height: #{$num}#{$unit} !important;
+      }
+    }
+  }
+}
+
+// flex 【flex 布局】
+@each $var in (row, row-reverse, column, column-reverse) {
+  .flex-direction-#{$var} {
+    flex-direction: $var !important;
+  }
+}
+
+@each $var in (nowrap, wrap, wrap-reverse) {
+  .flex-wrap-#{$var} {
+    flex-wrap: $var !important;
+  }
+}
+
+@each $var in (flex-start, flex-end, center, space-between, space-around) {
+  .justify-content-#{$var} {
+    justify-content: $var !important;
+  }
+}
+
+@each $var in (flex-start, flex-end, center, baseline, stretch) {
+  .align-items-#{$var} {
+    align-items: $var !important;
+  }
+}
+
+@each $var in (flex-start, flex-end, center, space-between, space-around, stretch) {
+  .align-content-#{$var} {
+    align-content: $var !important;
+  }
+}
+
+@for $num from 0 through 10 {
+  .order-#{$num} {
+    order: $num !important;
+  }
+  .flex-grow-#{$num} {
+    flex-grow: $num !important;
+  }
+  .flex-shrink-#{$num} {
+    flex-shrink: $num !important;
+  }
+}
+
+@each $var in (none, auto) {
+  .flex-#{$var} {
+    flex: $var !important;
+  }
+}
+
+@each $var in (auto, flex-start, flex-end, center, baseline, stretch) {
+  .align-self-#{$var} {
+    align-self: $var !important;
+  }
+}
+
+@import './_base.scss'; // scss 单独的公共样式文件(权重比上面的样式要高)

@@ -580,6 +580,10 @@ export default {
         console.error('请输入函数作为参数！')
         return
       }
+      
+      // 执行 fromItem 各自的校验
+      this.validateFromItem()
+      
       // 进行整体校验
       this.validateData().then((val) => {
         if (!val) {
@@ -591,6 +595,21 @@ export default {
         callBack(false)
       })
     },
+    
+    // 执行 fromItem 各自的校验
+    validateFromItem() {
+      // 1.刷选一级带有 prop 属性的子元素
+      let fromItemProp = this.$children.filter((v) => {
+        return v.prop
+      })
+
+      // 2.循环执行带有 prop 属性的一级子元素身上的 validate 校验方法
+      fromItemProp.map((item) => {
+        item.validate()
+      })
+    },
+    
+    // 整体校验
     validateData() {
       let { model, rules } = this
       let validateRuler = new Promise(function (resolve, reject) {
@@ -610,17 +629,17 @@ export default {
 综上，就完成了一个拥有表单验证功能 form 的完整组件。
 
 
+--------
 
+# 实现一个 notify 消息提示弹窗组件
+可以在 JS 中直接调用
 
-
-
-
-
-
-
-
-
-
+```
+this.$notify.info({
+  message: '提示语',
+  duration: 1000
+})
+```
 
 
 

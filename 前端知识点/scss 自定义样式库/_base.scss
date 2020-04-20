@@ -1,0 +1,47 @@
+/*-- 单独的公共样式文件 --*/
+
+// 清除点击出现虚拟框
+a {
+  outline: none;
+  text-decoration: none;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+  &:focus{
+    outline:0;
+  }
+  &:link, 
+  &:visited {
+    color: #333;
+    text-decoration: none;
+  }
+}
+a img {
+  border: none;
+}
+
+// 清浮动
+.clearfix {
+  *zoom: 1;
+  &:after {
+    content: "."; 
+    height: 0; 
+    display: block;
+    visibility: hidden; 
+    clear: both;
+  }
+}
+
+// 圆角 50%
+.border-radius-circle {
+  -moz-border-radius: 50% !important;
+  -webkit-border-radius: 50% !important;
+  border-radius: 50% !important;
+}
+
+// 清除边框
+.border-none {
+  border: none !important;
+}
+
+.border-block {
+  border: block !important;
+}

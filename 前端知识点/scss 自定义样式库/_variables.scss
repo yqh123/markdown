@@ -1,0 +1,42 @@
+// for & each 循环体最大遍历次数
+$ForEachLength: (
+  num3: 3,
+  num10: 10,
+  num30: 30,
+  num50: 50,
+  num100: 100,
+
+  numF3: -3,
+  numF10: -10,
+  numF30: -30,
+  numF50: -50,
+  numF100: -100
+);
+
+// 默认颜色
+$COLOR_DEFAULT: #737373; 
+
+// color 属性集合
+$COLOR: (default: #737373, primary: #1890ff, danger: #ff4d4f, white: #ffffff);
+
+// display 属性集合
+$DISPLAY: (none, block, inline, inline-block, flex, inline-flex);
+
+// border-style 属性集合
+$BORDER_STYLE: (solid, dotted, dashed);
+
+// position(属性) 属性集合
+$POSITION_SX: (relative, absolute, fixed, static, inherit);
+
+// position(方位) 属性集合
+$POSITION_WZ: (top, right, bottom, left);
+
+// 单位集合
+$UNIT: (px, em, rem, vw, vh, bfb);
+
+// float 浮动集合
+$FLOAT: (left, right, none, inherit);
+
+// vertical-align 属性集合
+$VERTICAL_ALIGN: (baseline, sub, super, text-top, text-bottom, top, middle, bottom, inherit);
+
