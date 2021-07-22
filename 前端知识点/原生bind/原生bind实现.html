@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+<script>
+Function.prototype.myBind = function(thisArg, ...arg) {
+  // 目标函数
+  let self = this 
+
+  // 返回的新函数
+  let Bound = function(...res) {
+    self.apply(thisArg, [...arg, ...res])
+  }
+
+  // 新函数继承目标函数原型，以及修正新函数 prototype.consturctor 指向
+  Bound.prototype = Object.create(self.prototype)
+  Bound.prototype.consturctor = self
+
+  return Bound
+}
+
+function func(...arg) {
+  console.log(this, arg)
+}
+
+func.prototype.getName = function() {
+  console.log('我执行了')
+}
+
+let newFunc = func.myBind({a: 1}, 1,2,3)
+let newFunc2 = new newFunc(4,5,6) // 打印：{a: 1} (6) [1, 2, 3, 4, 5, 6]
+newFunc2.getName() // 打印：我执行了
+
+</script>
+</body>
+</html>
